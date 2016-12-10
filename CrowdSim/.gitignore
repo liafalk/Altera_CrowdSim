@@ -1,0 +1,4 @@
+*.sln
+
+.idea/
+cmake-build-debug/
