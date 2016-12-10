@@ -4,17 +4,17 @@
 
 
 # Configuration directories and files
-SourceDirectory: /home/af2213/crowdsim_FPGA/CrowdSim/RVO2
-BuildDirectory: /home/af2213/crowdsim_FPGA/CrowdSim/RVO2
+SourceDirectory: D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2
+BuildDirectory: D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2
 
 # Where to place the cost data store
 CostDataFile: 
 
 # Site is something like machine.domain, i.e. pragmatic.crd
-Site: ee-snowball2
+Site: CORSAIR
 
 # Build name is osname-revision-compiler, i.e. Linux-2.4.2-2smp-c++
-BuildName: Linux-c++
+BuildName: Win32-mingw32-make
 
 # Submission information
 IsCDash: 
@@ -27,19 +27,22 @@ DropSitePassword:
 DropSiteMode: 
 DropMethod: http
 TriggerSite: 
-ScpCommand: /usr/bin/scp
+ScpCommand: SCPCOMMAND-NOTFOUND
 
 # Dashboard start time
 NightlyStartTime: 00:00:00 EDT
 
 # Commands for the build/test/submit cycle
-ConfigureCommand: "/mnt/applications/cmake/bin/cmake" "/home/af2213/crowdsim_FPGA/CrowdSim/RVO2"
-MakeCommand: /mnt/applications/cmake/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}" -- -i
+ConfigureCommand: "D:/Program Files (x86)/JetBrains/CLion 2016.2.3/bin/cmake/bin/cmake.exe" "D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2"
+MakeCommand: D:/Program\ Files\ (x86)/JetBrains/CLion\ 2016.2.3/bin/cmake/bin/cmake.exe --build . --config "${CTEST_CONFIGURATION_TYPE}" -- -i
 DefaultCTestConfigurationType: Release
+
+# version control
+UpdateVersionOnly: 
 
 # CVS options
 # Default is "-d -P -A"
-CVSCommand: /usr/bin/cvs
+CVSCommand: CVSCOMMAND-NOTFOUND
 CVSUpdateOptions: -d -A -P
 
 # Subversion options
@@ -48,7 +51,8 @@ SVNOptions:
 SVNUpdateOptions: 
 
 # Git options
-GITCommand: /mnt/applications/rh/devtoolset-2/root/usr/bin/git
+GITCommand: D:/Program Files/Git/cmd/git.exe
+GITInitSubmodules: 
 GITUpdateOptions: 
 GITUpdateCustom: 
 
@@ -65,18 +69,21 @@ UpdateOptions:
 UpdateType: 
 
 # Compiler info
-Compiler: /mnt/applications/rh/devtoolset-2/root/usr/bin/c++
+Compiler: D:/MinGW/bin/g++.exe
+CompilerVersion: 5.3.0
 
 # Dynamic analysis (MemCheck)
 PurifyCommand: 
 ValgrindCommand: 
 ValgrindCommandOptions: 
-MemoryCheckCommand: /usr/bin/valgrind
+MemoryCheckType: 
+MemoryCheckSanitizerOptions: 
+MemoryCheckCommand: MEMORYCHECK_COMMAND-NOTFOUND
 MemoryCheckCommandOptions: 
 MemoryCheckSuppressionFile: 
 
 # Coverage
-CoverageCommand: /mnt/applications/rh/devtoolset-2/root/usr/bin/gcov
+CoverageCommand: D:/MinGW/bin/gcov.exe
 CoverageExtraFlags: -l
 
 # Cluster commands
@@ -89,6 +96,10 @@ SlurmRunCommand: SLURM_SRUN_COMMAND-NOTFOUND
 # process will be summarily terminated.
 # Currently set to 25 minutes
 TimeOut: 1500
+
+# During parallel testing CTest will not start a new test if doing
+# so would cause the system load to exceed this value.
+TestLoad: 
 
 UseLaunchers: 
 CurlOptions: 

@@ -1,1 +1,0 @@
-/mnt/applications/rh/devtoolset-2/root/usr/bin/c++    -std=c++11    CMakeFiles/Circle.dir/Circle.cpp.o  -o Circle -rdynamic ../src/libRVO.a 

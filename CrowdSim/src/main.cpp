@@ -19,9 +19,7 @@
 // problem reports or change requests be submitted to it directly
 
 
-#include <Windows.h>
 #include <stdio.h>
-#include <time.h>
 
 // for console
 #include <io.h>
@@ -30,11 +28,21 @@
 #include <exception>
 #include <sstream>
 
-
 //#include "display/SampleWindow.h"
 #include "SimulateCL.h"
 
+#ifdef __linux__
+#include <sys/time.h>
+#include <unistd.h>
+#include <libgen.h>
+#elif defined(_WIN32) || defined(WIN32)
+#include <time.h>
+#include <Windows.h>
 #include "RenderGL.h"
+#else
+#include <ctime>
+#endif
+
 
 #include "cmdparser.hpp"
 #include "oclobject.hpp"
@@ -136,7 +144,7 @@ private:
     int m_mouseZDelta;
 
     SimulateCL m_SimulateCL;
-    RenderGL m_render;
+    //RenderGL m_render;
 
     bool m_suspended;
     int timestep;

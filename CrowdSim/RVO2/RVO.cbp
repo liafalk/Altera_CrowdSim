@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6"/>
+	<Project>
+		<Option title="RVO"/>
+		<Option makefile_is_custom="1"/>
+		<Option compiler="gcc"/>
+		<Option virtualFolders="CMake Files\;CMake Files\RVO2\;CMake Files\RVO2\src\;CMake Files\RVO2\examples\;"/>
+		<Build>
+			<Target title="all">
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 all"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Experimental">
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 Experimental"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Continuous">
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 Continuous"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Nightly">
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2"/>
+				<Option type="4"/>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 Nightly"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="RVO">
+				<Option output="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/libRVO.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DNOMINMAX"/>
+					<Add directory="D:/Intel/OpenCL SDK/6.3/include"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/../common"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/src"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include-fixed"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../mingw32/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/mingw32"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Makefile&quot;  VERBOSE=1 RVO"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="RVO/fast">
+				<Option output="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/libRVO.a" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src"/>
+				<Option object_output="./"/>
+				<Option type="2"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add option="-DNOMINMAX"/>
+					<Add directory="D:/Intel/OpenCL SDK/6.3/include"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/../common"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/src"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include-fixed"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../mingw32/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/mingw32"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Makefile&quot;  VERBOSE=1 RVO/fast"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Roadmap">
+				<Option output="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Roadmap.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="D:/Intel/OpenCL SDK/6.3/include"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/../common"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/src"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include-fixed"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../mingw32/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/mingw32"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 Roadmap"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Roadmap/fast">
+				<Option output="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Roadmap.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="D:/Intel/OpenCL SDK/6.3/include"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/../common"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/src"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include-fixed"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../mingw32/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/mingw32"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 Roadmap/fast"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Blocks">
+				<Option output="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Blocks.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="D:/Intel/OpenCL SDK/6.3/include"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/../common"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/src"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include-fixed"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../mingw32/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/mingw32"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 Blocks"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Blocks/fast">
+				<Option output="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Blocks.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="D:/Intel/OpenCL SDK/6.3/include"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/../common"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/src"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include-fixed"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../mingw32/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/mingw32"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 Blocks/fast"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Circle">
+				<Option output="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Circle.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="D:/Intel/OpenCL SDK/6.3/include"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/../common"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/src"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include-fixed"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../mingw32/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/mingw32"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 Circle"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+			<Target title="Circle/fast">
+				<Option output="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Circle.exe" prefix_auto="0" extension_auto="0"/>
+				<Option working_dir="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples"/>
+				<Option object_output="./"/>
+				<Option type="1"/>
+				<Option compiler="gcc"/>
+				<Compiler>
+					<Add directory="D:/Intel/OpenCL SDK/6.3/include"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/../common"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/src"/>
+					<Add directory="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include-fixed"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/../../../../mingw32/include"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/mingw32"/>
+					<Add directory="d:\mingw\bin\../lib/gcc/mingw32/5.3.0/include/c++/backward"/>
+				</Compiler>
+				<MakeCommands>
+					<Build command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 Circle/fast"/>
+					<CompileFile command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 &quot;$file&quot;"/>
+					<Clean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+					<DistClean command="D:/MinGW/bin/mingw32-make.exe -f &quot;D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Makefile&quot;  VERBOSE=1 clean"/>
+				</MakeCommands>
+			</Target>
+		</Build>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Blocks.cpp">
+			<Option target="Blocks"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Circle.cpp">
+			<Option target="Circle"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/Roadmap.cpp">
+			<Option target="Roadmap"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Agent.cpp">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Agent.h">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Definitions.h">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/KdTree.cpp">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/KdTree.h">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Obstacle.cpp">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Obstacle.h">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/RVO.h">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/RVOSimulator.cpp">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/RVOSimulator.h">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/Vector2.h">
+			<Option target="RVO"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\RVO2\"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\RVO2\"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\RVO2\src\"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/src/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\RVO2\src\"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\RVO2\examples\"/>
+		</Unit>
+		<Unit filename="D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2/examples/CMakeLists.txt">
+			<Option virtualFolder="CMake Files\RVO2\examples\"/>
+		</Unit>
+	</Project>
+</CodeBlocks_project_file>
