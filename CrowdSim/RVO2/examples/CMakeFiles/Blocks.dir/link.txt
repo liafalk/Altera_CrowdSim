@@ -1,0 +1,1 @@
+/mnt/applications/rh/devtoolset-2/root/usr/bin/c++    -std=c++11    CMakeFiles/Blocks.dir/Blocks.cpp.o  -o Blocks -rdynamic ../src/libRVO.a 
