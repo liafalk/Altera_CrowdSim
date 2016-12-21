@@ -22,7 +22,7 @@
 #include <stdio.h>
 
 // for console
-#include <io.h>
+
 #include <fcntl.h>
 #include <iostream>
 #include <exception>
@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <libgen.h>
 #elif defined(_WIN32) || defined(WIN32)
+#include <io.h>
 #include <time.h>
 #include <Windows.h>
 #include "RenderGL.h"

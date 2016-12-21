@@ -25,6 +25,7 @@
 #include <string>
 #include "oclobject.hpp"
 #include "../RVO2/src/RVO.h"
+#include "cmdoptions.hpp"
 
 using std::string;
 using namespace RVO;
