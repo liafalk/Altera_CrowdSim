@@ -4,17 +4,17 @@
 
 
 # Configuration directories and files
-SourceDirectory: D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2
-BuildDirectory: D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2
+SourceDirectory: /home/alex/CrowdSim/CrowdSim/RVO2
+BuildDirectory: /home/alex/CrowdSim/CrowdSim/RVO2
 
 # Where to place the cost data store
 CostDataFile: 
 
 # Site is something like machine.domain, i.e. pragmatic.crd
-Site: CORSAIR
+Site: alex-Latitude-E7240
 
 # Build name is osname-revision-compiler, i.e. Linux-2.4.2-2smp-c++
-BuildName: Win32-mingw32-make
+BuildName: Linux-c++
 
 # Submission information
 IsCDash: 
@@ -27,14 +27,14 @@ DropSitePassword:
 DropSiteMode: 
 DropMethod: http
 TriggerSite: 
-ScpCommand: SCPCOMMAND-NOTFOUND
+ScpCommand: /usr/bin/scp
 
 # Dashboard start time
 NightlyStartTime: 00:00:00 EDT
 
 # Commands for the build/test/submit cycle
-ConfigureCommand: "D:/Program Files (x86)/JetBrains/CLion 2016.2.3/bin/cmake/bin/cmake.exe" "D:/OneDrive/FYP/Intel_CrowdSim_FPGA/CrowdSim/RVO2"
-MakeCommand: D:/Program\ Files\ (x86)/JetBrains/CLion\ 2016.2.3/bin/cmake/bin/cmake.exe --build . --config "${CTEST_CONFIGURATION_TYPE}" -- -i
+ConfigureCommand: "/usr/bin/cmake" "/home/alex/CrowdSim/CrowdSim/RVO2"
+MakeCommand: /usr/bin/cmake --build . --config "${CTEST_CONFIGURATION_TYPE}" -- -i
 DefaultCTestConfigurationType: Release
 
 # version control
@@ -51,8 +51,7 @@ SVNOptions:
 SVNUpdateOptions: 
 
 # Git options
-GITCommand: D:/Program Files/Git/cmd/git.exe
-GITInitSubmodules: 
+GITCommand: /usr/bin/git
 GITUpdateOptions: 
 GITUpdateCustom: 
 
@@ -69,8 +68,8 @@ UpdateOptions:
 UpdateType: 
 
 # Compiler info
-Compiler: D:/MinGW/bin/g++.exe
-CompilerVersion: 5.3.0
+Compiler: /usr/bin/c++
+CompilerVersion: 5.4.0
 
 # Dynamic analysis (MemCheck)
 PurifyCommand: 
@@ -83,7 +82,7 @@ MemoryCheckCommandOptions:
 MemoryCheckSuppressionFile: 
 
 # Coverage
-CoverageCommand: D:/MinGW/bin/gcov.exe
+CoverageCommand: /usr/bin/gcov
 CoverageExtraFlags: -l
 
 # Cluster commands
