@@ -89,7 +89,7 @@ inline Vector2i operator- (const Vector2i& a, const Vector2i& b)
 }
 
 
-// Application window class
+/*// Application window class
 class AppWindow
 {
 public:
@@ -454,7 +454,7 @@ void AppWindow::Shutdown()
 {
     m_SimulateCL.Shutdown();
     m_render.Shutdown();
-}
+}*/
 
 
 void parseArgs(CmdParserCrowdSim& cmdparser)
@@ -480,13 +480,14 @@ int main (int argc, const char** argv)
         parseArgs(cmdparser);
 
         cout << "Simulating " << cmdparser.size.getValue() << " agents using " << (cmdparser.no_opencl.getValue() ? "C" : "OpenCL") << "\n";
-        cout << "Graphics " << (cmdparser.no_graphics.getValue() ? "Off" : "On") << "\n";
+        ///cout << "Graphics " << (cmdparser.no_graphics.getValue() ? "Off" : "On") << "\n";
         cout.flush();
 
         string device_type_name = cmdparser.device_type.getValue();
     
         double kernelTime;
-        if(cmdparser.no_graphics.getValue())
+        //if(cmdparser.no_graphics.getValue())
+        if(1)
         {
             // Create simulation engine and place agents into their initial positions
 
@@ -542,7 +543,7 @@ int main (int argc, const char** argv)
         }
         else
         {
-            AppWindow m(cmdparser);
+/*            AppWindow m(cmdparser);
             
             return m.Show(
                 GetModuleHandle(0),
@@ -556,7 +557,7 @@ int main (int argc, const char** argv)
                 #else
                 0
                 #endif
-            );
+            );*/
         }
     }
     catch(const CmdParser::Error& error)

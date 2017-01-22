@@ -1,6 +1,0 @@
-*.sln
-*.cmake
-
-.idea/
-cmake-build-debug/
-CMakeFiles/

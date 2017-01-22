@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE abiword PUBLIC "-//ABISOURCE//DTD AWML 1.0 Strict//EN" "http://www.abisource.com/awml.dtd">
+<abiword template="false" xmlns:ct="http://www.abisource.com/changetracking.dtd" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:math="http://www.w3.org/1998/Math/MathML" xid-max="54" xmlns:dc="http://purl.org/dc/elements/1.1/" fileformat="1.1" xmlns:svg="http://www.w3.org/2000/svg" xmlns:awml="http://www.abisource.com/awml.dtd" xmlns="http://www.abisource.com/awml.dtd" xmlns:xlink="http://www.w3.org/1999/xlink" version="3.0.1" xml:space="preserve" props="dom-dir:ltr; document-footnote-restart-section:0; document-endnote-type:numeric; document-endnote-place-enddoc:1; document-endnote-initial:1; lang:en-US; document-endnote-restart-section:0; document-footnote-restart-page:0; document-footnote-type:numeric; document-footnote-initial:1; document-endnote-place-endsection:0">
+<!-- ======================================================================== -->
+<!-- This file is an AbiWord document.                                        -->
+<!-- AbiWord is a free, Open Source word processor.                           -->
+<!-- More information about AbiWord is available at http://www.abisource.com/ -->
+<!-- You should not edit this file by hand.                                   -->
+<!-- ======================================================================== -->
+
+<metadata>
+<m key="abiword.date_last_changed">Wed Dec 21 18:52:18 2016
+</m>
+<m key="abiword.generator">AbiWord</m>
+<m key="dc.date">Wed Dec 21 18:52:18 2016
+</m>
+<m key="dc.format">application/x-abiword</m>
+</metadata>
+<rdf>
+</rdf>
+<history version="1" edit-time="1500" last-saved="1482313938" uid="cc9773b6-c762-11e6-85d3-8d4cc68d587a">
+<version id="1" started="1482313938" uid="293a271c-c763-11e6-85d3-8d4cc68d587a" auto="0" top-xid="4"/>
+</history>
+<styles>
+<s type="P" name="List Paragraph" basedon="_Normal" props="margin-left:36.000000pt"/>
+<s type="P" name="_Normal" basedon="Normal"/>
+<s type="P" name="Normal" basedon="Normal" followedby="Current Settings" props="lang:ar-SA; font-size:11.000000pt; margin-bottom:8.000000pt; font-family:Times New Roman; line-height:1.079167"/>
+<s type="C" name="Default Paragraph Font" basedon="Normal"/>
+<s type="P" name="No List" basedon="Normal"/>
+<s type="P" name="Normal Table" basedon="Normal"/>
+</styles>
+<lists>
+<l id="100" parentid="0" type="5" start-value="1" list-delim="%L." list-decimal="."/>
+</lists>
+<pagesize pagetype="Letter" orientation="portrait" width="8.500000" height="11.000000" units="in" page-scale="1.000000"/>
+<section xid="7" props="page-margin-right:1.000000in; column-line:off; page-margin-left:1.000000in; columns:1; page-margin-top:1.000000in; page-margin-bottom:1.000000in">
+<p xid="8">FYP Project musings:</p>
+<p xid="9"><c></c></p>
+<p xid="10">milestones</p>
+<p level="0" listid="100" parentid="0" style="List Paragraph" xid="11" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt"><field level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" xid="12" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt"></field><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">	Compiled several examples for the Altera/Intel SDK on the snowball departmental server. It takes a long time to compile.</c></p>
+<p level="0" listid="100" parentid="0" style="List Paragraph" xid="13" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt"><field level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" xid="14" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt"></field><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">	Examined the CrowdSim program for Intel OpenCL 2.0</c></p>
+<p xid="15"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt"></c></p>
+<p xid="16"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">Crowdsim analysis:</c></p>
+<p xid="17"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">Interestingly the biggest part of it is an external library created by a team at the University of North Carolina- RVO2. It’s for the “Reciprocal Collision Avoidance for Real-Time Multi-Agent Simulation”. In other words, this is the thing that does the crowd simulation. This is located in the RVO2 folder- it can be replaced with a (newer?) version from the library homepage which contains a makefile/CMakeList that can be used to compile it for linux- not much work to be done here as it is in C++.</c></p>
+<p xid="18"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt"></c></p>
+<p xid="19"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">Oddly enough compiling with my machine (OpenCL 2.1 is supported) works, however when running the program, it can’t compile the OpenCL code. Errors such as this appear:</c></p>
+<p xid="20" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">1:31:9: error: unknown type name 'float2'; did you mean 'float'?</c></p>
+<p xid="21" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">1:56:5: error: unknown type name 'uint'; did you mean 'int'?</c></p>
+<p xid="22" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">1:78:5: error: unknown type name 'uint'; did you mean 'int'?</c></p>
+<p xid="23" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">1:79:5: error: unknown type name 'uint'; did you mean 'int'?</c></p>
+<p xid="24" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">1:84:5: error: unknown type name 'uint'; did you mean 'int'?</c></p>
+<p xid="25" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">1:85:5: error: unknown type name 'uint'; did you mean 'int'?</c></p>
+<p xid="26" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt"></c></p>
+<p xid="27" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">Which is strange as these are standard OpenCL types defined since OpenCL 1.1 (I think?). Perhaps it can’t find the correct OpenCL run-time?</c></p>
+<p xid="28" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt"></c></p>
+<p xid="29" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">It seems like these errors were caused by the OpenCL compiler having an include directive that included the working directory. For some reason this prevented the compiler from being able to use the proper CL header files/libs.</c></p>
+<p xid="30"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt"><pbr/></c></p>
+<p xid="31" props="margin-bottom:0.000000pt"><c level="0" listid="100" parentid="0" style="List Paragraph" type="list_label" props="text-indent:-18.000000pt; field-font:NULL; margin-left:36.000000pt">The source files (w/o RVO2 library):</c></p>
+<p xid="32" props="margin-bottom:0.000000pt"><c props="font-weight:bold">basic.cpp</c></p>
+<p xid="33" props="margin-bottom:0.000000pt">So this appears to implement basic reusable functions in the code, things like is_number, etc.</p>
+<p xid="34" props="margin-bottom:0.000000pt">But more importantly it also implements functions which work with aligned pointers, such as malloc and free. Need to look into this.</p>
+<p xid="35" props="margin-bottom:0.000000pt"><c></c></p>
+<p xid="36" props="margin-bottom:0.000000pt"><c props="font-weight:bold">cmdoptions.cpp</c></p>
+<p xid="37" props="margin-bottom:0.000000pt">This file contains the display for any command line flags, for help (display all) and if any invalid parameters are specified. Not very interesting.</p>
+<p xid="38" props="margin-bottom:0.000000pt"><c></c></p>
+<p xid="39" props="margin-bottom:0.000000pt"><c props="font-weight:bold">cmdparser.cpp</c></p>
+<p xid="40" props="margin-bottom:0.000000pt">Similar to cmdoptions, this one works the handling of cmd flags.</p>
+<p xid="41" props="margin-bottom:0.000000pt"><c></c></p>
+<p xid="42" props="margin-bottom:0.000000pt"><c props="font-weight:bold">main.cpp</c></p>
+<p xid="43" props="margin-bottom:0.000000pt">Point of entry.</p>
+<p xid="44" props="margin-bottom:0.000000pt"><c></c></p>
+<p xid="45" props="margin-bottom:0.000000pt"><c props="font-weight:bold">oclobject.cpp</c></p>
+<p xid="46" props="margin-bottom:0.000000pt">It describes a class called OpenCLBasic, and presumably handles the initialization of the OpenCL context.</p>
+<p xid="47" props="margin-bottom:0.000000pt"><c></c></p>
+<p xid="48" props="margin-bottom:0.000000pt"><c props="font-weight:bold">RenderGL.cpp</c></p>
+<p xid="49" props="margin-bottom:0.000000pt">This is as the name suggests, the file that handles the rendering of the simulation. Unfortunately it is mostly rigged up for windows so we will exclude this file for now.</p>
+<p xid="50" props="margin-bottom:0.000000pt"><c></c></p>
+<p xid="51" props="margin-bottom:0.000000pt"><c props="font-weight:bold">SimulateCL.cpp</c></p>
+<p xid="52" props="margin-bottom:0.000000pt">This handles the CL execution of the RVO library.<pbr/></p>
+<p xid="1" props="margin-bottom:0.000000pt">The original Intel code has multiple calls to windows specific headers (windows.h, io.h), which are used specificially for the OpenGL rendering and creation of the application window.</p>
+<p xid="2" props="margin-bottom:0.000000pt">Thankfully we can get rid of this as we don’t have a monitor to output to.</p>
+<p xid="3" props="margin-bottom:0.000000pt"><c></c></p>
+<p xid="4" props="margin-bottom:0.000000pt">However it seems as though the program uses OpenGL  (why?) even when the graphics disabled flag is enabled.</p>
+<p xid="5" props="margin-bottom:0.000000pt"><c></c></p>
+<p xid="6" props="text-align:left; margin-bottom:0.000000pt; dom-dir:ltr">libglu1-mesa-dev<bookmark type="start" name="_GoBack" xid="53"/><bookmark type="end" name="_GoBack" xid="54"/></p>
+</section>
+</abiword>
