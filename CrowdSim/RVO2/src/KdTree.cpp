@@ -90,7 +90,7 @@ namespace RVO {
 
             // If OpenCL simulation is enabled, allocate regions
             // as shared virtual memory buffers
-            if(!sim_->cmdparser_->no_opencl.getValue())
+            if(0 && !sim_->cmdparser_->no_opencl.getValue())
             {
                 sim_->svmAllocator->unregisterSVMPointer(agents_);
                 clSVMFree(sim_->oclobjects_->context, agents_);

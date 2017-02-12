@@ -226,7 +226,7 @@ void SimulateCL::Init (
     crowd_sim = new RVOSimulator(
         oclobjects,
         cmdparser,
-        cmdparser->no_graphics.getValue() || cmdparser->no_gl_sharing.getValue() ? 0 : m_points
+        /*cmdparser->no_graphics.getValue()*/ 1 || cmdparser->no_gl_sharing.getValue() ? 0 : m_points
     );
 
     printf("[ INFO ] Created RVOSimulator.\n");
@@ -374,7 +374,8 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime)
     }
     #endif
     
-    crowd_sim->doStep();
+    //crowd_sim->doStep();
+    crowd_sim->doStep_NoSVM();
 
     #ifdef INTEL_NOT_FOR_RELEASE
     if(cmdparser->interactiveDiagnostics.getValue())

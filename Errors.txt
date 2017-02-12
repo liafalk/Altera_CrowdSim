@@ -1,0 +1,93 @@
+Compilation could only be completed through emulation.
+Attempted compilation lead to the following errors:
+
+alex@alex-Latitude-E7240:~/CrowdSim/CrowdSim$ ./compile_emu.sh 
+/home/alex/CrowdSim/CrowdSim/src/CrowdSim.cl:454:42: error: Kernel argument cannot be a pointer to pointer(s)
+void computeNewVelocity(__global PAgent* agents, __global PAgent* agentsForTree, __global AgentTreeNode* agentTree_, float timeStep)
+                                         ^
+/home/alex/CrowdSim/CrowdSim/src/CrowdSim.cl:454:67: error: Kernel argument cannot be a pointer to pointer(s)
+void computeNewVelocity(__global PAgent* agents, __global PAgent* agentsForTree, __global AgentTreeNode* agentTree_, float timeStep)
+                                                                  ^
+/home/alex/CrowdSim/CrowdSim/src/CrowdSim.cl:454:106: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global PAgent* agents, __global PAgent* agentsForTree, __global AgentTreeNode* agentTree_, float timeStep)
+                                                                                                         ^
+/home/alex/CrowdSim/CrowdSim/src/CrowdSim.cl:779:40: error: Kernel argument cannot be a pointer to pointer(s)
+__kernel void update (__global PAgent* agents, float timeStep)
+                                       ^
+/home/alex/CrowdSim/CrowdSim/src/CrowdSim.cl:793:46: error: Kernel argument cannot be a pointer to pointer(s)
+__kernel void updateCustom (__global PAgent* agents, float timeStep, __global float4* positionsForRendering)
+                                             ^
+/home/alex/CrowdSim/CrowdSim/src/CrowdSim.cl:793:87: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+__kernel void updateCustom (__global PAgent* agents, float timeStep, __global float4* positionsForRendering)
+                                                                                      ^
+2 warnings and 4 errors generated.
+Error: OpenCL parser FAILED.
+Refer to CrowdSim/CrowdSim.log for details.
+
+As we can see, the problem lies with agents and agentForTree being a pointer to a pointer (tree structures).
+So lets fix this.
+
+ // Agents themselves are not passed to kernel explicitly, instead an array of pointer to agents is passed.
+err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 0, agentsBufferPtr_);
+SAMPLE_CHECK_ERRORS(err);
+err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 1, kdTree_->agents_);
+SAMPLE_CHECK_ERRORS(err);
+err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 2, kdTree_->agentTree_);
+SAMPLE_CHECK_ERRORS(err);
+
+err = clSetKernelArgSVMPointer(kernelUpdate_, 0, agentsBufferPtr_);
+SAMPLE_CHECK_ERRORS(err);
+
+etc. corresponding to the above
+
+
+svmAllocator->setKernelSVMPointers(kernelUpdate_);
+what is this? find out
+
+so the pointers are built from a kdTree (k-dimensional tree). Need to convert into a self contained data structure.
+
+So from 1) agentsBufferPtr_ is created here:
+
+	// Create a new buffer with adjusted size and populate it with agents' pointers
+	// WARNING! Buffer cannot be used here because later it cannot be passed as an argument
+	// due to bug in the OpenCL implementation.
+	agentsBufferPtr_ = clSVMAlloc(oclobjects_->context, CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER, newAgentsBufferSize, 0);
+	assert(agentsBufferPtr_);
+	svmAllocator->registerSVMPointer(agentsBufferPtr_);
+	std::copy(agents_.begin(), agents_.end(), (Agent**)agentsBufferPtr_);
+
+So this seems like as it is a read only buffer, it is not written to inside the device. So the contents of the agents_ buffer is copied into the buffer at the beginning of each step.
+
+It's a vector of Agent* std::vector<Agent *> agents_;
+Agent is constructed in addAgent and it consists of multiple properties of each agent.
+BUT it is really initialized in SimulateCL::setupScenario4(RVOSimulator* sim), which creates the four 'blocks' of agents we see in the visual simulation.
+As it's only added by position, all agents have the SAME properties (max speed, radius, time horizon, velocity, etc..).
+Using this information we can minimize the information we have to transfer over to the device.
+
+HOWEVER, it does a call agent->allocateBuffers(svmAllocator) which may be a problem.
+Interestingly it has the conditional
+        if(!cmdparser_->no_opencl.getValue())
+        {
+            agent =  new (svmAllocator->allocate(sizeof(Agent))) Agent(this);
+        }
+        else
+        {
+            agent = new Agent(this);
+        }
+So supposing that this function can be used without openCL (thus no SVM) it may be safe to proceed and ignore the call.
+
+kdTree_->buildAgentTree();
+this builds the tree,
+
+   // If no OpenCL is enabled, allocate regions
+// with regular system functions
+free(agents_);
+delete [] agentTree_;
+agents_ = (Agent**)malloc(sizeof(Agent*)*numAgents_);
+agentTree_ = new AgentTreeNode[numAgentTreeNodes];
+
+Perhaps use this? Allocates wihout using SVM structures
+
+SimulateCL Line 377 does doStep()
+
+kdTree is actually not a pointer structure- built from class AgentTreeNode and contains a cl_uint with the node number for left and right.

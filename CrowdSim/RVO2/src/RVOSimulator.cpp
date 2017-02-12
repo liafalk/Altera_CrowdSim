@@ -231,7 +231,7 @@ namespace RVO {
     {
         Agent* agent = 0;
 
-        if(!cmdparser_->no_opencl.getValue())
+        if( 0 && !cmdparser_->no_opencl.getValue())
         {
             agent = new (svmAllocator->allocate(sizeof(Agent))) Agent(this);
         }
@@ -302,6 +302,301 @@ namespace RVO {
         }
 
         return obstacleNo;
+    }
+
+    void RVOSimulator::doStep_NoSVM()
+    {
+        double simStartStamp = 0, simBuildAgentTreeStamp = 0, simVelocitiesStamp = 0;
+
+        #ifdef INTEL_NOT_FOR_RELEASE
+        if(cmdparser_->advanced_perf_measurements.getValue())
+        {
+            simStartStamp = time_stamp();
+        }
+        #endif
+
+        kdTree_->buildAgentTree();
+
+        #ifdef INTEL_NOT_FOR_RELEASE
+        if(cmdparser_->advanced_perf_measurements.getValue())
+        {
+            simBuildAgentTreeStamp = time_stamp();
+        }
+        #endif
+
+        #ifdef INTEL_NOT_FOR_RELEASE
+        if(cmdparser_->interactiveDiagnostics.getValue())
+        {
+            std::cout << "[ INFO ] After kdTree_->buildAgentTree.\n";
+            std::cout.flush();
+        }
+        #endif
+
+        // If OpenCL is enabled, do the simulation via OpenCL kernel
+        if(oclobjects_ && cmdparser_ && !cmdparser_->no_opencl.getValue())
+        {
+            #ifdef INTEL_NOT_FOR_RELEASE
+
+            if(cmdparser_->force_c_neighbors_kernel.getValue())
+            {
+                #ifdef _OPENMP
+                #pragma omp parallel for
+                #endif
+                for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
+                    agents_[i]->computeNeighbors();
+                }
+            }
+
+            #endif
+
+            size_t newAgentsBufferSize = agents_.size() * sizeof(Agent*);
+            cl_int err = CL_SUCCESS;
+            
+            if(newAgentsBufferSize > agentsBufferSize_)
+            {
+                // As the library doesn't have ability to delete agents, we need to update OpenCL buffer only when
+                // the number of agents in simulation is increased. And as buffer contains pointer to agents, this synchronization
+                // goes unidirectionally from std::vector to OpenCL buffer.
+
+                if(agentsBufferSize_ > 0)
+                {
+                    // If it is not the first time when allocation is performed,
+                    // deallocate previously allocated buffer.
+                    svmAllocator->unregisterSVMPointer(agentsBufferPtr_);
+                    clSVMFree(oclobjects_->context, agentsBufferPtr_);
+                    SAMPLE_CHECK_ERRORS(err);
+                }
+
+                #ifdef INTEL_NOT_FOR_RELEASE
+                if(cmdparser_->interactiveDiagnostics.getValue())
+                {
+                    std::cout << "Buffer size = " << newAgentsBufferSize << "\n";
+                }
+                #endif
+
+                // Create a new buffer with adjusted size and populate it with agents' pointers
+                // WARNING! Buffer cannot be used here because later it cannot be passed as an argument
+                // due to bug in the OpenCL implementation.
+                agentsBufferPtr_ = clSVMAlloc(oclobjects_->context, CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER, newAgentsBufferSize, 0);
+                assert(agentsBufferPtr_);
+                svmAllocator->registerSVMPointer(agentsBufferPtr_);
+
+                std::copy(agents_.begin(), agents_.end(), (Agent**)agentsBufferPtr_);
+                
+                agentsBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(Agent)*newAgentsBufferSize, &agents_[0], &err);
+                SAMPLE_CHECK_ERRORS(err);
+                std::cout << "[ INFO ] Created agentsBuffer\n";
+
+                #ifdef INTEL_NOT_FOR_RELEASE
+                if(cmdparser_->interactiveDiagnostics.getValue())
+                {
+                    std::cout << "[ INFO ] After agentsBuffer_ = clCreateBuffer with value: " << agentsBufferPtr_ << ".\n";
+                    std::cout.flush();
+                }
+                #endif
+
+                // Save the new buffer size value
+                agentsBufferSize_ = newAgentsBufferSize;
+            }
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->interactiveDiagnostics.getValue())
+            {
+                std::cout << "[ INFO ] Before setting argumetns for kernel kernelComputeNewVelocity_ = " << kernelComputeNewVelocity_ << "\n";
+                std::cout.flush();
+            }
+            #endif
+
+            // Agents themselves are not passed to kernel explicitly, instead an array of pointer to agents is passed.
+            //err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 0, agentsBufferPtr_);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(Agent)*newAgentsBufferSize, &agentsBuffer);
+            SAMPLE_CHECK_ERRORS(err);
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->interactiveDiagnostics.getValue())
+            {
+                std::cout << "[ INFO ] After clSetKernelArg(kernelComputeNewVelocity_, 0, ...)\n";
+                std::cout.flush();
+            }
+            #endif
+
+            err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 1, kdTree_->agents_);
+            //err = clSetKernelArg(kernelComputeNewVelocity_, 1, kdTree_->agents_);
+            SAMPLE_CHECK_ERRORS(err);
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->interactiveDiagnostics.getValue())
+            {
+                std::cout << "[ INFO ] After clSetKernelArg(kernelComputeNewVelocity_, 1, ...)\n";
+                std::cout.flush();
+            }
+            #endif
+
+            err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 2, kdTree_->agentTree_);
+            //err = clSetKernelArg(kernelComputeNewVelocity_, 2, kdTree_->agentTree_);
+            SAMPLE_CHECK_ERRORS(err);
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->interactiveDiagnostics.getValue())
+            {
+                std::cout << "[ INFO ] After clSetKernelArg(kernelComputeNewVelocity_, 2, ...)\n";
+                std::cout.flush();
+            }
+            #endif
+
+            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(timeStep_), &timeStep_);
+            SAMPLE_CHECK_ERRORS(err);
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->interactiveDiagnostics.getValue())
+            {
+                std::cout << "[ INFO ] After clSetKernelArg(kernelComputeNewVelocity_, 3, ...)\n";
+                std::cout.flush();
+            }
+            #endif
+
+            size_t global_size = agents_.size();
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->interactiveDiagnostics.getValue())
+            {
+                std::cout << "[ INFO ] After kernelComputeNewVelocity kernel argument settings.\n";
+                std::cout.flush();
+            }
+            #endif
+
+            err = clEnqueueNDRangeKernel(
+                oclobjects_->queue,
+                kernelComputeNewVelocity_,
+                1,
+                0, &global_size, cmdparser_->work_group_size.localSize(),
+                0, 0, 0
+            );
+            SAMPLE_CHECK_ERRORS(err);
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->interactiveDiagnostics.getValue())
+            {
+                std::cout << "[ INFO ] After kernelComputeNewVelocity kernel enqueue.";
+                std::cout.flush();
+            }
+            #endif
+
+            err = clSetKernelArgSVMPointer(kernelUpdate_, 0, agentsBufferPtr_);
+            //err = clSetKernelArg(kernelUpdate_, 0, agentsBuffer);
+            SAMPLE_CHECK_ERRORS(err);
+            err = clSetKernelArg(kernelUpdate_, 1, sizeof(timeStep_), &timeStep_);
+            SAMPLE_CHECK_ERRORS(err);
+
+            if(customUpdateBuffer_)
+            {
+                // If a custom version of update kernel is used, then there is the third argument in that kernel and
+                // it should be set to the customUpdateBuffer
+                err = clSetKernelArg(kernelUpdate_, 2, sizeof(customUpdateBuffer_), &customUpdateBuffer_);
+                SAMPLE_CHECK_ERRORS(err);
+            }
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->interactiveDiagnostics.getValue())
+            {
+                std::cout << "[ INFO ] After kernelUpdate kernel argument settings.";
+                std::cout.flush();
+            }
+            #endif
+
+            svmAllocator->setKernelSVMPointers(kernelUpdate_);
+
+            err = clEnqueueNDRangeKernel(
+                oclobjects_->queue,
+                kernelUpdate_,
+                1,
+                0, &global_size, cmdparser_->work_group_size.localSize(),
+                0, 0, 0
+            );
+            SAMPLE_CHECK_ERRORS(err);
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->interactiveDiagnostics.getValue())
+            {
+                std::cout << "[ INFO ] After kernelUpdate kernel enqueue.";
+                std::cout.flush();
+            }
+            #endif
+
+            err = clFinish(oclobjects_->queue);
+            SAMPLE_CHECK_ERRORS(err);
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->interactiveDiagnostics.getValue())
+            {
+                std::cout << "[ INFO ] After clFinish.";
+                std::cout.flush();
+            }
+            #endif
+
+            if(cmdparser_->force_c_velocity_kernel.getValue())
+            {
+                #ifdef _OPENMP
+                #pragma omp parallel for
+                #endif
+                for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
+                    agents_[i]->computeNewVelocity();
+                }
+            }
+
+            #endif
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->advanced_perf_measurements.getValue())
+            {
+                simVelocitiesStamp = time_stamp();
+            }
+            #endif
+
+            }
+        else
+        {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
+                agents_[i]->computeNeighbors();
+                agents_[i]->computeNewVelocity();
+            }
+
+            #ifdef INTEL_NOT_FOR_RELEASE
+            if(cmdparser_->advanced_perf_measurements.getValue())
+            {
+                simVelocitiesStamp = time_stamp();
+            }
+            #endif
+
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+            for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
+                agents_[i]->update();
+            }
+        }
+
+        #ifdef INTEL_NOT_FOR_RELEASE
+        if(cmdparser_->advanced_perf_measurements.getValue())
+        {
+            double simEndStamp = time_stamp();
+
+            std::cout
+                << "Detailed performance metrics:\n"
+                << "    buildAgentTree time:      " << 1000*(simBuildAgentTreeStamp - simStartStamp) << " ms\n"
+                << "    computeNewVelocity time:  " << 1000*(simVelocitiesStamp - simBuildAgentTreeStamp) << " ms\n"
+                //<< "    update time:              " << 1000*(simEndStamp - simVelocitiesStamp) << " ms\n" // TODO Needs device side measurements in this case
+                << "    COMPLETE doStep time:     " << 1000*(simEndStamp - simStartStamp) << " ms\n"
+            ;
+        }
+        #endif
+
+        globalTime_ += timeStep_;
     }
 
     void RVOSimulator::doStep()

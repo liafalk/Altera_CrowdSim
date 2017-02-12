@@ -245,6 +245,13 @@ namespace RVO {
          */
         void doStep();
 
+         /**
+         * \brief      Lets the simulator perform a simulation step and updates the
+         *             two-dimensional position and two-dimensional velocity of
+         *             each agent.
+         */
+        void doStep_NoSVM();
+
         /**
          * \brief      Returns the specified agent neighbor of the specified
          *             agent.
@@ -629,6 +636,7 @@ namespace RVO {
 
         size_t agentsBufferSize_;
         void* agentsBufferPtr_;
+        cl_mem agentsBuffer;
         
         friend struct Agent;
         friend class KdTree;

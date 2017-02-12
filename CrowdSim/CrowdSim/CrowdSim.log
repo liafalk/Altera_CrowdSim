@@ -1,0 +1,29 @@
+Compiler Command: aoc -march=emulator --board de1soc_sharedonly CrowdSim.cl
+/home/alex/CrowdSim/CrowdSim/CrowdSim.cl:456:54: error: no member named 'value' in 'struct __Agent'
+    __global Agent* agent = agents[get_global_id(0)].value;
+                            ~~~~~~~~~~~~~~~~~~~~~~~~ ^
+/home/alex/CrowdSim/CrowdSim/CrowdSim.cl:460:34: warning: incompatible pointer types passing '__attribute__((address_space(16776960))) Agent *' (aka '__attribute__((address_space(16776960))) struct __Agent *') to parameter of type '__attribute__((address_space(16776960))) PAgent *' (aka '__attribute__((address_space(16776960))) struct __PAgent *')
+    computeAgentNeighbors(agent, agentsForTree, agentTree_);
+                                 ^~~~~~~~~~~~~
+/home/alex/CrowdSim/CrowdSim/CrowdSim.cl:269:68: note: passing argument to parameter 'agents' here
+void computeAgentNeighbors(__global Agent* agent, __global PAgent *agents, __global AgentTreeNode* agentTree_)
+                                                                   ^
+/home/alex/CrowdSim/CrowdSim/CrowdSim.cl:454:41: error: Kernel argument cannot be a pointer to pointer(s)
+void computeNewVelocity(__global Agent* agents, __global Agent* agentsForTree, __global AgentTreeNode* agentTree_, float timeStep)
+                                        ^
+/home/alex/CrowdSim/CrowdSim/CrowdSim.cl:454:65: error: Kernel argument cannot be a pointer to pointer(s)
+void computeNewVelocity(__global Agent* agents, __global Agent* agentsForTree, __global AgentTreeNode* agentTree_, float timeStep)
+                                                                ^
+/home/alex/CrowdSim/CrowdSim/CrowdSim.cl:454:104: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global Agent* agentsForTree, __global AgentTreeNode* agentTree_, float timeStep)
+                                                                                                       ^
+/home/alex/CrowdSim/CrowdSim/CrowdSim.cl:551:40: error: Kernel argument cannot be a pointer to pointer(s)
+__kernel void update (__global PAgent* agents, float timeStep)
+                                       ^
+/home/alex/CrowdSim/CrowdSim/CrowdSim.cl:565:46: error: Kernel argument cannot be a pointer to pointer(s)
+__kernel void updateCustom (__global PAgent* agents, float timeStep, __global float4* positionsForRendering)
+                                             ^
+/home/alex/CrowdSim/CrowdSim/CrowdSim.cl:565:87: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+__kernel void updateCustom (__global PAgent* agents, float timeStep, __global float4* positionsForRendering)
+                                                                                      ^
+3 warnings and 5 errors generated.

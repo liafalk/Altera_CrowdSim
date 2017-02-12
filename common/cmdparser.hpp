@@ -209,7 +209,6 @@ public:
     {
         return m_parsed_value;
     }
-
     void addEnum (CmdEnum<T>* alternative)
     {
         m_alternatives.push_back(alternative);

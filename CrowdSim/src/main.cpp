@@ -486,8 +486,7 @@ int main (int argc, const char** argv)
         string device_type_name = cmdparser.device_type.getValue();
     
         double kernelTime;
-        //if(cmdparser.no_graphics.getValue())
-        if(1)
+        if(1 || cmdparser.no_graphics.getValue())
         {
             // Create simulation engine and place agents into their initial positions
 
