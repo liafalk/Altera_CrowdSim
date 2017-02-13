@@ -21,7 +21,13 @@
 
 #include "Constants.h"
 
+/*
+typedef struct {
+	float x;
+	float y;
+} Vector2;
 
+typedef unsigned int uint; */
 typedef float2 Vector2;
 
 // The following structures definitions use pack pragma
@@ -184,7 +190,7 @@ StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float dis
     return stackNode + 1;
 }
 
-void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node)
+void queryAgentTreeRecursive(__global PAgent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node)
 {
     StackNode stack[MAX_KDTREE_DEPTH];
     StackNode* stackTop = &stack[0];
@@ -200,7 +206,7 @@ void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __g
             case 0:
                 if (agentTree_[node].end - agentTree_[node].begin <= RVO_MAX_LEAF_SIZE) {
                     for (uint i = agentTree_[node].begin; i < agentTree_[node].end; ++i) {
-                        insertAgentNeighbor(agent, &agents_[i], rangeSq);
+                        insertAgentNeighbor(agent, agents_[i].value, rangeSq);
                     }
                     break;
                 }
@@ -266,7 +272,7 @@ void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __g
 }
 
 
-void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __global AgentTreeNode* agentTree_)
+void computeAgentNeighbors(__global Agent* agent, __global PAgent *agents, __global AgentTreeNode* agentTree_)
 {
     agent->numObstacleNeighbors_ = 0;
     float rangeSq = sqr(agent->timeHorizonObst_ * agent->maxSpeed_ + agent->radius_);
@@ -451,13 +457,13 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
 
 __kernel
-void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep)
+void computeNewVelocity(__global PAgent* agents, __global PAgent* agentsForTree, __global AgentTreeNode* agentTree_, float timeStep)
 {
-    __global Agent* agent = &agents[get_global_id(0)];
+    __global Agent* agent = agents[get_global_id(0)].value;
 
     #ifndef FORCE_C_NEIGHBORS_KERNEL
 
-    computeAgentNeighbors(agent, agents, agentTree_);
+    computeAgentNeighbors(agent, agentsForTree, agentTree_);
 
     #endif
 
@@ -467,6 +473,234 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
     float radius_ = agent->radius_;
     Vector2 position_ = agent->position_;
     Vector2 velocity_ = agent->velocity_;
+
+    #if 0
+
+    const float invTimeHorizonObst = 1.0f / agent->timeHorizonObst_;
+
+    /* Create obstacle ORCA lines. */
+    for (uint i = 0; i < agent->numObstacleNeighbors_; ++i) {
+
+        const __global Obstacle *obstacle1 = agent->obstacleNeighbors_[i].second;
+        const __global Obstacle *obstacle2 = obstacle1->nextObstacle_;
+
+        const Vector2 relativePosition1 = obstacle1->point_ - position_;
+        const Vector2 relativePosition2 = obstacle2->point_ - position_;
+
+        /*
+            * Check if velocity obstacle of obstacle is already taken care of by
+            * previously constructed obstacle ORCA lines.
+            */
+        bool alreadyCovered = false;
+
+        for (uint j = 0; j < agent->numOrcaLines_; ++j) {
+            if (det(invTimeHorizonObst * relativePosition1 - agent->orcaLines_[j].point, agent->orcaLines_[j].direction) - invTimeHorizonObst * radius_ >= -RVO_EPSILON && det(invTimeHorizonObst * relativePosition2 - agent->orcaLines_[j].point, agent->orcaLines_[j].direction) - invTimeHorizonObst * radius_ >=  -RVO_EPSILON) {
+                alreadyCovered = true;
+                break;
+            }
+        }
+
+        if (alreadyCovered) {
+            continue;
+        }
+
+        /* Not yet covered. Check for collisions. */
+
+        const float distSq1 = absSq(relativePosition1);
+        const float distSq2 = absSq(relativePosition2);
+
+        const float radiusSq = sqr(radius_);
+
+        const Vector2 obstacleVector = obstacle2->point_ - obstacle1->point_;
+        const float s = dot(-relativePosition1, obstacleVector) / absSq(obstacleVector);
+        const float distSqLine = absSq(-relativePosition1 - s * obstacleVector);
+
+        Line line;
+
+        if (s < 0.0f && distSq1 <= radiusSq) {
+            /* Collision with left vertex. Ignore if non-convex. */
+            if (obstacle1->isConvex_) {
+                line.point = (Vector2)(0.0f, 0.0f);
+                line.direction = normalize((Vector2)(-relativePosition1.y, relativePosition1.x));
+                agent->orcaLines_[agent->numOrcaLines_++] = line;
+            }
+
+            continue;
+        }
+        else if (s > 1.0f && distSq2 <= radiusSq) {
+            /* Collision with right vertex. Ignore if non-convex
+                * or if it will be taken care of by neighoring obstace */
+            if (obstacle2->isConvex_ && det(relativePosition2, obstacle2->unitDir_) >= 0.0f) {
+                line.point = (Vector2)(0.0f, 0.0f);
+                line.direction = normalize((Vector2)(-relativePosition2.y, relativePosition2.x));
+                agent->orcaLines_[agent->numOrcaLines_++] = line;
+            }
+
+            continue;
+        }
+        else if (s >= 0.0f && s < 1.0f && distSqLine <= radiusSq) {
+            /* Collision with obstacle segment. */
+            line.point = (Vector2)(0.0f, 0.0f);
+            line.direction = -obstacle1->unitDir_;
+            agent->orcaLines_[agent->numOrcaLines_++] = line;
+            continue;
+        }
+
+        /*
+            * No collision.
+            * Compute legs. When obliquely viewed, both legs can come from a single
+            * vertex. Legs extend cut-off line when nonconvex vertex.
+            */
+
+        Vector2 leftLegDirection, rightLegDirection;
+
+        if (s < 0.0f && distSqLine <= radiusSq) {
+            /*
+                * Obstacle viewed obliquely so that left vertex
+                * defines velocity obstacle.
+                */
+            if (!obstacle1->isConvex_) {
+                /* Ignore obstacle. */
+                continue;
+            }
+
+            obstacle2 = obstacle1;
+
+            const float leg1 = sqrt(distSq1 - radiusSq);
+            leftLegDirection = (Vector2)(relativePosition1.x * leg1 - relativePosition1.y * radius_, relativePosition1.x * radius_ + relativePosition1.y * leg1) / distSq1;
+            rightLegDirection = (Vector2)(relativePosition1.x * leg1 + relativePosition1.y * radius_, -relativePosition1.x * radius_ + relativePosition1.y * leg1) / distSq1;
+        }
+        else if (s > 1.0f && distSqLine <= radiusSq) {
+            /*
+                * Obstacle viewed obliquely so that
+                * right vertex defines velocity obstacle.
+                */
+            if (!obstacle2->isConvex_) {
+                /* Ignore obstacle. */
+                continue;
+            }
+
+            obstacle1 = obstacle2;
+
+            const float leg2 = sqrt(distSq2 - radiusSq);
+            leftLegDirection = (Vector2)(relativePosition2.x * leg2 - relativePosition2.y * radius_, relativePosition2.x * radius_ + relativePosition2.y * leg2) / distSq2;
+            rightLegDirection = (Vector2)(relativePosition2.x * leg2 + relativePosition2.y * radius_, -relativePosition2.x * radius_ + relativePosition2.y * leg2) / distSq2;
+        }
+        else {
+            /* Usual situation. */
+            if (obstacle1->isConvex_) {
+                const float leg1 = sqrt(distSq1 - radiusSq);
+                leftLegDirection = (Vector2)(relativePosition1.x * leg1 - relativePosition1.y * radius_, relativePosition1.x * radius_ + relativePosition1.y * leg1) / distSq1;
+            }
+            else {
+                /* Left vertex non-convex; left leg extends cut-off line. */
+                leftLegDirection = -obstacle1->unitDir_;
+            }
+
+            if (obstacle2->isConvex_) {
+                const float leg2 = sqrt(distSq2 - radiusSq);
+                rightLegDirection = (Vector2)(relativePosition2.x * leg2 + relativePosition2.y * radius_, -relativePosition2.x * radius_ + relativePosition2.y * leg2) / distSq2;
+            }
+            else {
+                /* Right vertex non-convex; right leg extends cut-off line. */
+                rightLegDirection = obstacle1->unitDir_;
+            }
+        }
+
+        /*
+            * Legs can never point into neighboring edge when convex vertex,
+            * take cutoff-line of neighboring edge instead. If velocity projected on
+            * "foreign" leg, no constraint is added.
+            */
+
+        const __global Obstacle *const leftNeighbor = obstacle1->prevObstacle_;
+
+        bool isLeftLegForeign = false;
+        bool isRightLegForeign = false;
+
+        if (obstacle1->isConvex_ && det(leftLegDirection, -leftNeighbor->unitDir_) >= 0.0f) {
+            /* Left leg points into obstacle. */
+            leftLegDirection = -leftNeighbor->unitDir_;
+            isLeftLegForeign = true;
+        }
+
+        if (obstacle2->isConvex_ && det(rightLegDirection, obstacle2->unitDir_) <= 0.0f) {
+            /* Right leg points into obstacle. */
+            rightLegDirection = obstacle2->unitDir_;
+            isRightLegForeign = true;
+        }
+
+        /* Compute cut-off centers. */
+        const Vector2 leftCutoff = invTimeHorizonObst * (obstacle1->point_ - position_);
+        const Vector2 rightCutoff = invTimeHorizonObst * (obstacle2->point_ - position_);
+        const Vector2 cutoffVec = rightCutoff - leftCutoff;
+
+        /* Project current velocity on velocity obstacle. */
+
+        /* Check if current velocity is projected on cutoff circles. */
+        const float t = (obstacle1 == obstacle2 ? 0.5f : dot((velocity_ - leftCutoff), cutoffVec) / absSq(cutoffVec));
+        const float tLeft = dot((velocity_ - leftCutoff), leftLegDirection);
+        const float tRight = dot((velocity_ - rightCutoff), rightLegDirection);
+
+        if ((t < 0.0f && tLeft < 0.0f) || (obstacle1 == obstacle2 && tLeft < 0.0f && tRight < 0.0f)) {
+            /* Project on left cut-off circle. */
+            const Vector2 unitW = normalize(velocity_ - leftCutoff);
+
+            line.direction = (Vector2)(unitW.y, -unitW.x);
+            line.point = leftCutoff + radius_ * invTimeHorizonObst * unitW;
+            agent->orcaLines_[agent->numOrcaLines_++] = line;
+            continue;
+        }
+        else if (t > 1.0f && tRight < 0.0f) {
+            /* Project on right cut-off circle. */
+            const Vector2 unitW = normalize(velocity_ - rightCutoff);
+
+            line.direction = (Vector2)(unitW.y, -unitW.x);
+            line.point = rightCutoff + radius_ * invTimeHorizonObst * unitW;
+            agent->orcaLines_[agent->numOrcaLines_++] = line;
+            continue;
+        }
+
+        /*
+            * Project on left leg, right leg, or cut-off line, whichever is closest
+            * to velocity.
+            */
+        const float distSqCutoff = ((t < 0.0f || t > 1.0f || obstacle1 == obstacle2) ? INFINITY : absSq(velocity_ - (leftCutoff + t * cutoffVec)));
+        const float distSqLeft = ((tLeft < 0.0f) ? INFINITY : absSq(velocity_ - (leftCutoff + tLeft * leftLegDirection)));
+        const float distSqRight = ((tRight < 0.0f) ? INFINITY : absSq(velocity_ - (rightCutoff + tRight * rightLegDirection)));
+
+        if (distSqCutoff <= distSqLeft && distSqCutoff <= distSqRight) {
+            /* Project on cut-off line. */
+            line.direction = -obstacle1->unitDir_;
+            line.point = leftCutoff + radius_ * invTimeHorizonObst * (Vector2)(-line.direction.y, line.direction.x);
+            agent->orcaLines_[agent->numOrcaLines_++] = line;
+            continue;
+        }
+        else if (distSqLeft <= distSqRight) {
+            /* Project on left leg. */
+            if (isLeftLegForeign) {
+                continue;
+            }
+
+            line.direction = leftLegDirection;
+            line.point = leftCutoff + radius_ * invTimeHorizonObst * (Vector2)(-line.direction.y, line.direction.x);
+            agent->orcaLines_[agent->numOrcaLines_++] = line;
+            continue;
+        }
+        else {
+            /* Project on right leg. */
+            if (isRightLegForeign) {
+                continue;
+            }
+
+            line.direction = -rightLegDirection;
+            line.point = rightCutoff + radius_ * invTimeHorizonObst * (Vector2)(-line.direction.y, line.direction.x);
+            agent->orcaLines_[agent->numOrcaLines_++] = line;
+            continue;
+        }
+    }
+
+    #endif
 
     const uint numObstLines = agent->numOrcaLines_;
 
@@ -548,10 +782,10 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
 
 
 // Do regular update of current velocity and position for an agent
-__kernel void update (__global Agent* agents, float timeStep)
+__kernel void update (__global PAgent* agents, float timeStep)
 {
     int id = get_global_id(0);
-    __global Agent* agent = &agents[id];
+    __global Agent* agent = agents[id].value;
 
     // Update agent velocity and position
     agent->velocity_ = agent->newVelocity_;

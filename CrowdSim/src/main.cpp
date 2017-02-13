@@ -60,6 +60,8 @@
 // Define icon id for sample window
 #define IDI_SAMPLE_ICON 101
 
+//#define INTEL_NOT_FOR_RELEASE
+
 // Two integer component vector
 struct Vector2i
 {

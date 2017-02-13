@@ -223,7 +223,7 @@ namespace RVO {
         AgentTreeNode* agentTree_;
         ObstacleTreeNode *obstacleTree_;
         RVOSimulator *sim_;
-
+        cl_uint treeSize; 
         static const size_t MAX_LEAF_SIZE = RVO_MAX_LEAF_SIZE;
         
         friend struct Agent;

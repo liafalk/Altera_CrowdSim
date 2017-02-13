@@ -619,6 +619,7 @@ namespace RVO {
         
     private:
         std::vector<Agent *> agents_;
+        std::vector<Agent> primitiveAgents;
         Agent *defaultAgent_;
         float globalTime_;
         KdTree *kdTree_;
@@ -636,7 +637,10 @@ namespace RVO {
 
         size_t agentsBufferSize_;
         void* agentsBufferPtr_;
+
+        // Modified OpenCL1.x buffers
         cl_mem agentsBuffer;
+        cl_mem treeBuffer;
         
         friend struct Agent;
         friend class KdTree;

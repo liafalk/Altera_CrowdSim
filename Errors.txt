@@ -91,3 +91,150 @@ Perhaps use this? Allocates wihout using SVM structures
 SimulateCL Line 377 does doStep()
 
 kdTree is actually not a pointer structure- built from class AgentTreeNode and contains a cl_uint with the node number for left and right.
+
+
+
+----------------------------
+
+PROBLEM 1:
+The first argument to kernel, __global PAgent* agents, is defined as:
+agentsBufferPtr_ = clSVMAlloc(oclobjects_->context, CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER, newAgentsBufferSize, 0);
+assert(agentsBufferPtr_);
+svmAllocator->registerSVMPointer(agentsBufferPtr_);
+std::copy(agents_.begin(), agents_.end(), (Agent**)agentsBufferPtr_);
+
+Where the datatype PAgent is defined as:
+typedef struct __PAgent
+{
+    __global Agent* value;
+} PAgent;
+
+Supposedly value refers to the pointer to the beginning of the agents_ array.
+However _agents is a std::vector<Agent *>, so we need to create a new array which is of type vector<Agent>.
+
+TEST 1: Change agent, but leave the other parameters as SVM arguments.
+
+CONCLUSION 1:
+The kernel compiles, but it hangs during runtime. (Confirmed infinite loop)
+Must be related to the kernel. Most likely due to changes not being passed to next kernel (due to it not being SVM).
+Updated both kernels - now to check the intermediate values.
+
+Ok, the position of the agents are being updated and changed:
+Agent 0's current position = (-14949.6, -15256.9) at time 21653.4
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-14950, -15257.3) at time 21654
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-14950.5, -15257.7) at time 21654.6
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-14950.9, -15258.2) at time 21655.2
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-14951.3, -15258.6) at time 21655.8
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-14951.7, -15259) at time 21656.4
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-14952.1, -15259.4) at time 21657
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-14952.6, -15259.9) at time 21657.6
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-14953, -15260.3) at time 21658.2
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-14953.4, -15260.7) at time 21658.8
+[ INFO ] crowd_sim->doStep was OK.
+but it seems like it is not checking properly for a end condition.
+This happens at bool SimulateCL::reachedGoal(RVOSimulator* sim)
+Vector2 goals[RVO_NUM_AGENTS];  
+
+So after confirming the goals, it seems to actually go past it:
+Agent 0's current position = (-50.2104, -55.063) at time 159.6 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-50.5924, -55.1739) at time 160.2 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-50.9566, -55.2796) at time 160.8 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-51.301, -55.3795) at time 161.4 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-51.6251, -55.4735) at time 162 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-51.9153, -55.5758) at time 162.6 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-52.1741, -55.6893) at time 163.2 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-52.4065, -55.8128) at time 163.8 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-52.617, -55.9436) at time 164.4 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+
+Ergo must have some algorithm error...
+
+Testing original kernel:
+Agent 0's current position = (-51, -52) at time 1067.38 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-51, -52) at time 1067.98 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-51, -52) at time 1068.58 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-51, -52) at time 1069.18 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-51, -52) at time 1069.78 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-51, -52) at time 1070.38 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+
+Finishes at time 1068, but agent itself reaches goal at around time ~188
+Agent 0's current position = (-50.9954, -51.9815) at time 184.2 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-50.9982, -51.9926) at time 184.8 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-50.9993, -51.997) at time 185.4 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-50.9997, -51.9988) at time 186 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-50.9999, -51.9995) at time 186.6 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-51, -51.9998) at time 187.2 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+Agent 0's current position = (-51, -51.9999) at time 187.8 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.  
+Agent 0's current position = (-51, -52) at time 188.4 - Goal at (-51, -52)
+[ INFO ] crowd_sim->doStep was OK.
+
+It looks like the velocities of the agents are not updated, as the behavior in the original, where it slows down as it reaches the goal is not observed.
+Let's take a look at their velocities.
+
+ORIGINAL:
+Agent 0's current position = (-50.392, -49.5278) at time 180 - Goal at (-51, -52) - Velocity = (-0.238835,-0.97106)
+Agent 0's current position = (-50.5353, -50.1105) at time 180.6 - Goal at (-51, -52) - Velocity = (-0.238836,-0.97106)
+Agent 0's current position = (-50.6786, -50.6931) at time 181.2 - Goal at (-51, -52) - Velocity = (-0.238835,-0.97106)
+Agent 0's current position = (-50.8219, -51.2758) at time 181.8 - Goal at (-51, -52) - Velocity = (-0.238834,-0.97106)
+Agent 0's current position = (-50.9287, -51.7103) at time 182.4 - Goal at (-51, -52) - Velocity = (-0.178131,-0.724243)
+Agent 0's current position = (-50.9715, -51.8841) at time 183 - Goal at (-51, -52) - Velocity = (-0.0712509,-0.289696)
+Agent 0's current position = (-50.9886, -51.9536) at time 183.6 - Goal at (-51, -52) - Velocity = (-0.0284996,-0.115879)
+Agent 0's current position = (-50.9954, -51.9815) at time 184.2 - Goal at (-51, -52) - Velocity = (-0.0113983,-0.0463524)
+Agent 0's current position = (-50.9982, -51.9926) at time 184.8 - Goal at (-51, -52) - Velocity = (-0.00455856,-0.0185394)
+Agent 0's current position = (-50.9993, -51.997) at time 185.4 - Goal at (-51, -52) - Velocity = (-0.00182343,-0.00741577)
+Agent 0's current position = (-50.9997, -51.9988) at time 186 - Goal at (-51, -52) - Velocity = (-0.000728607,-0.00296783)
+Agent 0's current position = (-50.9999, -51.9995) at time 186.6 - Goal at (-51, -52) - Velocity = (-0.000289917,-0.00118637)
+Agent 0's current position = (-51, -51.9998) at time 187.2 - Goal at (-51, -52) - Velocity = (-0.000114441,-0.000473022)
+Agent 0's current position = (-51, -51.9999) at time 187.8 - Goal at (-51, -52) - Velocity = (-4.57764e-05,-0.000190735)
+Agent 0's current position = (-51, -52) at time 188.4 - Goal at (-51, -52) - Velocity = (-1.90735e-05,-7.62939e-05)
+Agent 0's current position = (-51, -52) at time 189 - Goal at (-51, -52) - Velocity = (-7.62939e-06,-3.05176e-05)
+Agent 0's current position = (-51, -52) at time 189.6 - Goal at (-51, -52) - Velocity = (-3.8147e-06,-1.14441e-05)
+Agent 0's current position = (-51, -52) at time 190.2 - Goal at (-51, -52) - Velocity = (0,-3.8147e-06)
+Agent 0's current position = (-51, -52) at time 190.8 - Goal at (-51, -52) - Velocity = (0,0)
+
+NO SVM:
+Agent 0's current position = (50.5799, 51.5716) at time 0.6 - Goal at (-51, -52) - Velocity = (-0.700209,-0.713938)
+Agent 0's current position = (50.1598, 51.1433) at time 1.2 - Goal at (-51, -52) - Velocity = (-0.700209,-0.713938)
+Agent 0's current position = (49.7396, 50.7149) at time 1.8 - Goal at (-51, -52) - Velocity = (-0.700209,-0.713938)
+Agent 0's current position = (49.3195, 50.2865) at time 2.4 - Goal at (-51, -52) - Velocity = (-0.700209,-0.713938)
+Agent 0's current position = (48.8994, 49.8582) at time 3 - Goal at (-51, -52) - Velocity = (-0.700209,-0.713938)
+Agent 0's current position = (48.4793, 49.4298) at time 3.6 - Goal at (-51, -52) - Velocity = (-0.700209,-0.713938)
+Agent 0's current position = (48.0591, 49.0015) at time 4.2 - Goal at (-51, -52) - Velocity = (-0.700209,-0.713938)
+Agent 0's current position = (47.639, 48.5731) at time 4.8 - Goal at (-51, -52) - Velocity = (-0.700209,-0.713938)
+Agent 0's current position = (47.2189, 48.1447) at time 5.4 - Goal at (-51, -52) - Velocity = (-0.700209,-0.713938)
+
+Velocity never changes. But position is updated? Check where velocity is calculated and modified.
+The kernel update handles the update of position and setting the velocity (Velocity = newVelocity).
+Therefore the problem is newVelocity is not being calculated properly.
+OK problem is it uses a pointer to an array (__global AgentNeighbor* agentNeighbors_;) to calculate the velocity.
+Need to fix this.

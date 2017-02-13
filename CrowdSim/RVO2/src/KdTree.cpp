@@ -86,7 +86,7 @@ namespace RVO {
     {
         if (numAgents_ < sim_->agents_.size()) {
             numAgents_ = static_cast<cl_uint>(sim_->agents_.size());
-            cl_uint numAgentTreeNodes = static_cast<cl_uint>(2*sim_->agents_.size() - 1);
+            cl_uint numAgentTreeNodes = treeSize = static_cast<cl_uint>(2*sim_->agents_.size() - 1);
 
             // If OpenCL simulation is enabled, allocate regions
             // as shared virtual memory buffers

@@ -120,7 +120,10 @@ namespace RVO {
                     )
             );
             #else
-            openCLProgram_ = new OpenCLProgramMultipleKernels(*oclobjects_, L"CrowdSim.cl", "", "-I \"" + exeDir + "\" -cl-std=CL2.0");
+
+            //openCLProgram_ = new OpenCLProgramMultipleKernels(*oclobjects_, L"CrowdSim_OG.cl", "", "-I \"" + exeDir + "\" -cl-std=CL2.0");
+            openCLProgram_ = new OpenCLProgramMultipleKernels(*oclobjects_, L"CrowdSim.cl", "", "-I \"" + exeDir + "\" -cl-std=CL1.2");
+
             #endif
 
             kernelComputeNewVelocity_ = (*openCLProgram_)["computeNewVelocity"];
@@ -304,6 +307,7 @@ namespace RVO {
         return obstacleNo;
     }
 
+#define DEBUGON 0
     void RVOSimulator::doStep_NoSVM()
     {
         double simStartStamp = 0, simBuildAgentTreeStamp = 0, simVelocitiesStamp = 0;
@@ -358,7 +362,7 @@ namespace RVO {
                 // the number of agents in simulation is increased. And as buffer contains pointer to agents, this synchronization
                 // goes unidirectionally from std::vector to OpenCL buffer.
 
-                if(agentsBufferSize_ > 0)
+                if(0 && agentsBufferSize_ > 0)
                 {
                     // If it is not the first time when allocation is performed,
                     // deallocate previously allocated buffer.
@@ -367,103 +371,98 @@ namespace RVO {
                     SAMPLE_CHECK_ERRORS(err);
                 }
 
-                #ifdef INTEL_NOT_FOR_RELEASE
-                if(cmdparser_->interactiveDiagnostics.getValue())
+                if(DEBUGON)
                 {
                     std::cout << "Buffer size = " << newAgentsBufferSize << "\n";
                 }
-                #endif
 
                 // Create a new buffer with adjusted size and populate it with agents' pointers
                 // WARNING! Buffer cannot be used here because later it cannot be passed as an argument
                 // due to bug in the OpenCL implementation.
-                agentsBufferPtr_ = clSVMAlloc(oclobjects_->context, CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER, newAgentsBufferSize, 0);
-                assert(agentsBufferPtr_);
-                svmAllocator->registerSVMPointer(agentsBufferPtr_);
+                //agentsBufferPtr_ = clSVMAlloc(oclobjects_->context, CL_MEM_READ_ONLY | CL_MEM_SVM_FINE_GRAIN_BUFFER, newAgentsBufferSize, 0);
+                //assert(agentsBufferPtr_);
+                //svmAllocator->registerSVMPointer(agentsBufferPtr_);
 
-                std::copy(agents_.begin(), agents_.end(), (Agent**)agentsBufferPtr_);
-                
-                agentsBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, sizeof(Agent)*newAgentsBufferSize, &agents_[0], &err);
+                //std::copy(agents_.begin(), agents_.end(), (Agent**)agentsBufferPtr_);
+
+                for(int i=0; i<agents_.size(); ++i){
+                    primitiveAgents.push_back(*agents_[i]);
+                    printf("Copied agent %d with pos (%f,%f)\n", i, primitiveAgents[i].position_.x(),primitiveAgents[i].position_.y());
+                    agents_[i] = &primitiveAgents[i];
+                }
+
+                agentsBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(Agent)*newAgentsBufferSize, &primitiveAgents[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentsBuffer\n";
 
-                #ifdef INTEL_NOT_FOR_RELEASE
-                if(cmdparser_->interactiveDiagnostics.getValue())
+                treeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], &err);
+                SAMPLE_CHECK_ERRORS(err);
+                std::cout << "[ INFO ] Created treeBuffer\n";
+
+                if(DEBUGON)
                 {
                     std::cout << "[ INFO ] After agentsBuffer_ = clCreateBuffer with value: " << agentsBufferPtr_ << ".\n";
                     std::cout.flush();
                 }
-                #endif
 
                 // Save the new buffer size value
                 agentsBufferSize_ = newAgentsBufferSize;
             }
 
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->interactiveDiagnostics.getValue())
+            if(DEBUGON)
             {
-                std::cout << "[ INFO ] Before setting argumetns for kernel kernelComputeNewVelocity_ = " << kernelComputeNewVelocity_ << "\n";
+                std::cout << "[ INFO ] Before setting arguments for kernel kernelComputeNewVelocity_ = " << kernelComputeNewVelocity_ << "\n";
                 std::cout.flush();
             }
-            #endif
 
             // Agents themselves are not passed to kernel explicitly, instead an array of pointer to agents is passed.
             //err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 0, agentsBufferPtr_);
             err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(Agent)*newAgentsBufferSize, &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->interactiveDiagnostics.getValue())
+            if(DEBUGON)
             {
                 std::cout << "[ INFO ] After clSetKernelArg(kernelComputeNewVelocity_, 0, ...)\n";
                 std::cout.flush();
             }
-            #endif
 
-            err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 1, kdTree_->agents_);
+            //err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 1, kdTree_->agents_);
             //err = clSetKernelArg(kernelComputeNewVelocity_, 1, kdTree_->agents_);
             SAMPLE_CHECK_ERRORS(err);
 
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->interactiveDiagnostics.getValue())
+            if(DEBUGON)
             {
                 std::cout << "[ INFO ] After clSetKernelArg(kernelComputeNewVelocity_, 1, ...)\n";
                 std::cout.flush();
             }
-            #endif
 
-            err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 2, kdTree_->agentTree_);
-            //err = clSetKernelArg(kernelComputeNewVelocity_, 2, kdTree_->agentTree_);
+            //err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 1, kdTree_->agentTree_);
+            //printf("Size of kdTree = %lu\n", sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &treeBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->interactiveDiagnostics.getValue())
+            if(DEBUGON)
             {
                 std::cout << "[ INFO ] After clSetKernelArg(kernelComputeNewVelocity_, 2, ...)\n";
                 std::cout.flush();
             }
-            #endif
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(timeStep_), &timeStep_);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(timeStep_), &timeStep_);
             SAMPLE_CHECK_ERRORS(err);
 
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->interactiveDiagnostics.getValue())
+            if(DEBUGON)
             {
                 std::cout << "[ INFO ] After clSetKernelArg(kernelComputeNewVelocity_, 3, ...)\n";
                 std::cout.flush();
             }
-            #endif
 
             size_t global_size = agents_.size();
 
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->interactiveDiagnostics.getValue())
+            if(DEBUGON)
             {
                 std::cout << "[ INFO ] After kernelComputeNewVelocity kernel argument settings.\n";
                 std::cout.flush();
             }
-            #endif
 
             err = clEnqueueNDRangeKernel(
                 oclobjects_->queue,
@@ -474,16 +473,14 @@ namespace RVO {
             );
             SAMPLE_CHECK_ERRORS(err);
 
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->interactiveDiagnostics.getValue())
+            if(DEBUGON)
             {
-                std::cout << "[ INFO ] After kernelComputeNewVelocity kernel enqueue.";
+                std::cout << "[ INFO ] After kernelComputeNewVelocity kernel enqueue.\n";
                 std::cout.flush();
             }
-            #endif
 
-            err = clSetKernelArgSVMPointer(kernelUpdate_, 0, agentsBufferPtr_);
-            //err = clSetKernelArg(kernelUpdate_, 0, agentsBuffer);
+            //err = clSetKernelArgSVMPointer(kernelUpdate_, 0, agentsBufferPtr_);
+            err = clSetKernelArg(kernelUpdate_, 0, sizeof(Agent)*newAgentsBufferSize, &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
             err = clSetKernelArg(kernelUpdate_, 1, sizeof(timeStep_), &timeStep_);
             SAMPLE_CHECK_ERRORS(err);
@@ -496,15 +493,13 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
             }
 
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->interactiveDiagnostics.getValue())
+            if(DEBUGON)
             {
-                std::cout << "[ INFO ] After kernelUpdate kernel argument settings.";
+                std::cout << "[ INFO ] After kernelUpdate kernel argument settings.\n";
                 std::cout.flush();
             }
-            #endif
 
-            svmAllocator->setKernelSVMPointers(kernelUpdate_);
+            //svmAllocator->setKernelSVMPointers(kernelUpdate_);
 
             err = clEnqueueNDRangeKernel(
                 oclobjects_->queue,
@@ -515,27 +510,22 @@ namespace RVO {
             );
             SAMPLE_CHECK_ERRORS(err);
 
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->interactiveDiagnostics.getValue())
+            if(DEBUGON)
             {
-                std::cout << "[ INFO ] After kernelUpdate kernel enqueue.";
+                std::cout << "[ INFO ] After kernelUpdate kernel enqueue.\n";
                 std::cout.flush();
             }
-            #endif
 
             err = clFinish(oclobjects_->queue);
             SAMPLE_CHECK_ERRORS(err);
 
-            #ifdef INTEL_NOT_FOR_RELEASE
-
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->interactiveDiagnostics.getValue())
+            if(DEBUGON)
             {
-                std::cout << "[ INFO ] After clFinish.";
+                std::cout << "[ INFO ] After clFinish.\n";
                 std::cout.flush();
             }
-            #endif
 
+            /*
             if(cmdparser_->force_c_velocity_kernel.getValue())
             {
                 #ifdef _OPENMP
@@ -544,16 +534,18 @@ namespace RVO {
                 for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
                     agents_[i]->computeNewVelocity();
                 }
+            }*/
+            
+            err =  clEnqueueReadBuffer(oclobjects_->queue, agentsBuffer, CL_TRUE, 0, sizeof(Agent)*primitiveAgents.size(), &primitiveAgents[0], 0, NULL, NULL);
+            SAMPLE_CHECK_ERRORS(err);
+            for(int i=0; i<primitiveAgents.size(); ++i){
+                agents_[i] = &primitiveAgents[i];
             }
-
-            #endif
-
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->advanced_perf_measurements.getValue())
+            
+            if(DEBUGON)
             {
                 simVelocitiesStamp = time_stamp();
             }
-            #endif
 
             }
         else

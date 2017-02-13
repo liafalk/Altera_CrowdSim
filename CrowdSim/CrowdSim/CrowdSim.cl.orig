@@ -184,7 +184,7 @@ StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float dis
     return stackNode + 1;
 }
 
-void queryAgentTreeRecursive(__global PAgent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node)
+void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node)
 {
     StackNode stack[MAX_KDTREE_DEPTH];
     StackNode* stackTop = &stack[0];
@@ -200,7 +200,7 @@ void queryAgentTreeRecursive(__global PAgent* agents_, __global Agent *agent, __
             case 0:
                 if (agentTree_[node].end - agentTree_[node].begin <= RVO_MAX_LEAF_SIZE) {
                     for (uint i = agentTree_[node].begin; i < agentTree_[node].end; ++i) {
-                        insertAgentNeighbor(agent, agents_[i].value, rangeSq);
+                        insertAgentNeighbor(agent, &agents_[i], rangeSq);
                     }
                     break;
                 }
@@ -266,7 +266,7 @@ void queryAgentTreeRecursive(__global PAgent* agents_, __global Agent *agent, __
 }
 
 
-void computeAgentNeighbors(__global Agent* agent, __global PAgent *agents, __global AgentTreeNode* agentTree_)
+void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __global AgentTreeNode* agentTree_)
 {
     agent->numObstacleNeighbors_ = 0;
     float rangeSq = sqr(agent->timeHorizonObst_ * agent->maxSpeed_ + agent->radius_);
@@ -451,13 +451,13 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
 
 __kernel
-void computeNewVelocity(__global Agent* agents, __global Agent* agentsForTree, __global AgentTreeNode* agentTree_, float timeStep)
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep)
 {
-    __global Agent* agent = agents[get_global_id(0)].value;
+    __global Agent* agent = &agents[get_global_id(0)];
 
     #ifndef FORCE_C_NEIGHBORS_KERNEL
 
-    computeAgentNeighbors(agent, agentsForTree, agentTree_);
+    computeAgentNeighbors(agent, agents, agentTree_);
 
     #endif
 
@@ -548,10 +548,10 @@ void computeNewVelocity(__global Agent* agents, __global Agent* agentsForTree, _
 
 
 // Do regular update of current velocity and position for an agent
-__kernel void update (__global PAgent* agents, float timeStep)
+__kernel void update (__global Agent* agents, float timeStep)
 {
     int id = get_global_id(0);
-    __global Agent* agent = agents[id].value;
+    __global Agent* agent = &agents[id];
 
     // Update agent velocity and position
     agent->velocity_ = agent->newVelocity_;

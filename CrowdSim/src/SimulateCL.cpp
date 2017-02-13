@@ -374,20 +374,16 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime)
     }
     #endif
     
+    #define NOSVM
     //crowd_sim->doStep();
     crowd_sim->doStep_NoSVM();
 
-    #ifdef INTEL_NOT_FOR_RELEASE
-    if(cmdparser->interactiveDiagnostics.getValue())
-    {
-        printf("[ INFO ] crowd_sim->doStep was OK.\n");
-        cout.flush();
-        if(!cmdparser->interactiveDiagnosticsNoWait.getValue())
-        {
-            std::cin.get();
-        }
-    }
-    #endif
+    std::cout << "Agent 0's current position = (" << crowd_sim->getAgentPosition(0).x() << ", " << crowd_sim->getAgentPosition(0).y() 
+            << ") at time " << crowd_sim->getGlobalTime() << " - Goal at ("  << goals[0].x() << ", " << goals[0].y() << ") - Velocity = " << crowd_sim->getAgentVelocity(0) << "\n";
+    cout.flush();
+
+
+
 
     bool ret = !reachedGoal(crowd_sim);
 
