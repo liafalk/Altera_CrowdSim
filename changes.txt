@@ -1,0 +1,27 @@
+void computeNewVelocity(__global PAgent* agents, __global PAgent* agentsForTree, __global AgentTreeNode* agentTree_, float timeStep)
+{
+    __global Agent* agent = agents[get_global_id(0)].value;
+
+    #ifndef FORCE_C_NEIGHBORS_KERNEL
+
+    computeAgentNeighbors(agent, agentsForTree, agentTree_);
+
+
+convert to
+
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep)
+{
+    __global Agent* agent = &agents[get_global_id(0)];
+
+    #ifndef FORCE_C_NEIGHBORS_KERNEL
+
+    computeAgentNeighbors(agent, agents, agentTree_);
+
+reason:
+
+__PAgent itself is a struct that is just a pointer. Won't work in OpenCL 1.x
+
+typedef struct __PAgent
+{
+    __global Agent* value;
+} PAgent;

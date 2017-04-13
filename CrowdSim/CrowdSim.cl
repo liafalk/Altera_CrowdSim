@@ -137,7 +137,7 @@ inline float sqr (float x)
     return x*x;
 }
 
-
+/*
 void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent, float *rangeSq)
 {
     if (thisAgent != agent) {
@@ -166,6 +166,37 @@ void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent,
         }
     }
 }
+*/
+
+void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent, float *rangeSq, __global __AgentNeighbor* agentNeighbors)
+{
+    if (thisAgent != agent) {
+        const float distSq = absSq(thisAgent->position_ - agent->position_);
+
+        if (distSq < *rangeSq) {
+            uint indexBias = thisAgent->maxNeighbors_*get_global_id(0);
+            if (thisAgent->numAgentNeighbors_ < thisAgent->maxNeighbors_) {
+                agentNeighbors_[indexBias + thisAgent->numAgentNeighbors_].first = distSq;
+                agentNeighbors_[indexBias + thisAgent->numAgentNeighbors_].second = agent;
+                thisAgent->numAgentNeighbors_++;
+            }
+
+            uint i = thisAgent->numAgentNeighbors_ - 1;
+
+            while (i != 0 && distSq < agentNeighbors_[indexBias + i - 1].first) {
+                agentNeighbors_[indexBias+i] = agentNeighbors_[indexBias + i - 1];
+                --i;
+            }
+
+            agentNeighbors_[indexBias+i].first = distSq;
+            agentNeighbors_[indexBias+i].second = agent;
+
+            if (thisAgent->numAgentNeighbors_ == thisAgent->maxNeighbors_) {
+                *rangeSq = agentNeighbors_[indexBias+thisAgent->numAgentNeighbors_ - 1].first;
+            }
+        }
+    }
+}
 
 typedef struct __StackNode
 {
@@ -184,7 +215,7 @@ StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float dis
     return stackNode + 1;
 }
 
-void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node)
+void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node, __global __AgentNeighbor* agentNeighbors)
 {
     StackNode stack[MAX_KDTREE_DEPTH];
     StackNode* stackTop = &stack[0];
@@ -200,7 +231,7 @@ void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __g
             case 0:
                 if (agentTree_[node].end - agentTree_[node].begin <= RVO_MAX_LEAF_SIZE) {
                     for (uint i = agentTree_[node].begin; i < agentTree_[node].end; ++i) {
-                        insertAgentNeighbor(agent, &agents_[i], rangeSq);
+                        insertAgentNeighbor(agent, &agents_[i], rangeSq, agentNeighbors);
                     }
                     break;
                 }
@@ -266,7 +297,7 @@ void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __g
 }
 
 
-void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __global AgentTreeNode* agentTree_)
+void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __global AgentTreeNode* agentTree_, __global __AgentNeighbor* agentNeighbors)
 {
     agent->numObstacleNeighbors_ = 0;
     float rangeSq = sqr(agent->timeHorizonObst_ * agent->maxSpeed_ + agent->radius_);
@@ -278,7 +309,7 @@ void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __glob
 
     if (agent->maxNeighbors_ > 0) {
         rangeSq = sqr(agent->neighborDist_);
-        queryAgentTreeRecursive(agents, agent, agentTree_, &rangeSq, 0);
+        queryAgentTreeRecursive(agents, agent, agentTree_, &rangeSq, 0, agentNeighbors);
     }
 }
 
@@ -451,13 +482,13 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
 
 __kernel
-void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep)
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global __AgentNeighbor* agentNeighbors)
 {
     __global Agent* agent = &agents[get_global_id(0)];
 
     #ifndef FORCE_C_NEIGHBORS_KERNEL
 
-    computeAgentNeighbors(agent, agents, agentTree_);
+    computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors);
 
     #endif
 
@@ -471,10 +502,10 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
     const uint numObstLines = agent->numOrcaLines_;
 
     const float invTimeHorizon = 1.0f / agent->timeHorizon_;
-
+    uint indexBias = agent->maxNeighbors_*get_global_id(0);
     /* Create agent ORCA lines. */
     for (uint i = 0; i < agent->numAgentNeighbors_; ++i) {
-        const __global Agent *const other = agent->agentNeighbors_[i].second;
+        const __global Agent *const other = agentNeighbors_[indexBias+i].second;
 
         const Vector2 relativePosition = other->position_ - position_;
         const Vector2 relativeVelocity = velocity_ - other->velocity_;

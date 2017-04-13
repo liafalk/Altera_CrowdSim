@@ -384,14 +384,26 @@ namespace RVO {
                 //svmAllocator->registerSVMPointer(agentsBufferPtr_);
 
                 //std::copy(agents_.begin(), agents_.end(), (Agent**)agentsBufferPtr_);
+                
+                primitiveAgents.clear();
+                cl_uint maxNeighbors = agents_[0].maxNeighbors_;
+                neighborBuffer.resize(maxNeighbors*agents_.size());
 
                 for(int i=0; i<agents_.size(); ++i){
+                    for (j=0; j<agents_[i].numAgentNeighbors_; ++j){
+                        neighborBuffer[i*maxNeighbors + j] = agents_[i].agentNeighbors_[j];
+                    }
+                    
                     primitiveAgents.push_back(*agents_[i]);
                     printf("Copied agent %d with pos (%f,%f)\n", i, primitiveAgents[i].position_.x(),primitiveAgents[i].position_.y());
                     agents_[i] = &primitiveAgents[i];
                 }
 
                 agentsBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(Agent)*newAgentsBufferSize, &primitiveAgents[0], &err);
+                SAMPLE_CHECK_ERRORS(err);
+                std::cout << "[ INFO ] Created agentsBuffer\n";
+
+                agentNeighborBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(AgentNeighbor)*agentNeighbors_.size(), &neighborBuffer[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentsBuffer\n";
 
@@ -455,6 +467,9 @@ namespace RVO {
                 std::cout << "[ INFO ] After clSetKernelArg(kernelComputeNewVelocity_, 3, ...)\n";
                 std::cout.flush();
             }
+
+            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(AgentNeighbor)*agentNeighborBuffer.size(), &agentNeighborBuffer);
+            SAMPLE_CHECK_ERRORS(err);
 
             size_t global_size = agents_.size();
 
@@ -548,11 +563,8 @@ namespace RVO {
             }
 
             }
-        else
+        else // if opencl is not defined
         {
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
             for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
                 agents_[i]->computeNeighbors();
                 agents_[i]->computeNewVelocity();
@@ -565,9 +577,6 @@ namespace RVO {
             }
             #endif
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
             for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
                 agents_[i]->update();
             }

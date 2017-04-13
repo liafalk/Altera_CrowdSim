@@ -17,6 +17,7 @@ As maxNeighbors are set to the default (10), this conditional always evaluates t
 
 queryAgentTreeRecursive(__global PAgent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node)
 calls: insertAgentNeighbor(agent, agents_[i].value, rangeSq)
+
 QUESTION: agents_ is of type Agent** which should just point to the agents_ array? why is it supplied twice? redundancy?
 ANSWER: The agents_ array passed to the kernel is simply a buffer that has had the agents_ array copied to it. 
 kdTree->agents_ is a pointer to the actual agents_ array. Effectively the same thing, as agents_ is just an array of pointers.

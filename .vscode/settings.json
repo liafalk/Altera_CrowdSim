@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "*.cl": "cpp",
+        "*.tcc": "cpp",
+        "system_error": "cpp"
+    }
+}

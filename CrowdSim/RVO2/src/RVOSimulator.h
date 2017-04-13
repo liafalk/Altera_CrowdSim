@@ -620,6 +620,9 @@ namespace RVO {
     private:
         std::vector<Agent *> agents_;
         std::vector<Agent> primitiveAgents;
+
+        std::vector<AgentNeighbor> neighborBuffer;
+
         Agent *defaultAgent_;
         float globalTime_;
         KdTree *kdTree_;
@@ -643,6 +646,7 @@ namespace RVO {
         cl_mem treeBuffer;
         
         friend struct Agent;
+        friend struct AgentNeighbor;
         friend class KdTree;
         friend struct Obstacle;
     };
