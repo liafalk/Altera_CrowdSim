@@ -378,12 +378,9 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime)
     //crowd_sim->doStep();
     crowd_sim->doStep_NoSVM();
 
-    std::cout << "Agent 0's current position = (" << crowd_sim->getAgentPosition(0).x() << ", " << crowd_sim->getAgentPosition(0).y() 
-            << ") at time " << crowd_sim->getGlobalTime() << " - Goal at ("  << goals[0].x() << ", " << goals[0].y() << ") - Velocity = " << crowd_sim->getAgentVelocity(0) << "\n";
-    cout.flush();
-
-
-
+#define TESTID 0
+    printf("Agent 0's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", 
+        crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
 
     bool ret = !reachedGoal(crowd_sim);
 

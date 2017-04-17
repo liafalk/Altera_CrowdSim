@@ -31,6 +31,9 @@
 #include "oclobject.hpp"
 #include "basic.hpp"
 
+// altera
+#include "AOCLUtils/aocl_utils.h"
+
 using std::cerr;
 using std::vector;
 
@@ -578,8 +581,13 @@ cl_program createAndBuildProgram (
     const char* raw_text = &program_text_prepared[0];
     cl_int err;
     // TODO Using prepared length and not terminating by 0 is better way?
-    cl_program program = clCreateProgramWithSource(context, 1, &raw_text, 0, &err);
-    SAMPLE_CHECK_ERRORS(err);
+    //cl_program program = clCreateProgramWithSource(context, 1, &raw_text, 0, &err);
+
+    if(!aocl_utils::fileExists((const char*)"CrowdSim_emu.aocx"))
+        throw "No!";
+    
+    cl_program program = aocl_utils::createProgramFromBinary(context, "CrowdSim_emu.aocx", devices, num_of_devices);
+    //SAMPLE_CHECK_ERRORS(err);
 
     err = clBuildProgram(program, (cl_uint)num_of_devices, devices, build_options.c_str(), 0, 0);
 

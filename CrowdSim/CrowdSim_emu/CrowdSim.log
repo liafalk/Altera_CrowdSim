@@ -1,0 +1,35 @@
+Compiler Command: aoc -march=emulator -v --board s5_ref CrowdSim.cl -o CrowdSim_emu.aocx
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:445:71: warning: conversion specifies type 'double' but the argument has type 'Vector2' (aka 'float2')
+        if (get_global_id(0) == TESTID) printf("option3, optVelocity=%f\n", optVelocity);     
+                                                                     ~^     ~~~~~~~~~~~
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:539:26: warning: conversion specifies type 'double' but the argument has type 'AgentNeighborBuf' (aka 'struct __AgentNeighborBuf')
+            printf("%d: %f\n", i, agentNeighbors[i]);
+                        ~^        ~~~~~~~~~~~~~~~~~
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:526:41: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global AgentNeighborBuf* agentNeighbors, __global Line* orcaLines, __global Line* projLines, __global Agent* agentsForTree)
+                                        ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:526:73: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global AgentNeighborBuf* agentNeighbors, __global Line* orcaLines, __global Line* projLines, __global Agent* agentsForTree)
+                                                                        ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:526:128: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global AgentNeighborBuf* agentNeighbors, __global Line* orcaLines, __global Line* projLines, __global Agent* agentsForTree)
+                                                                                                                               ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:526:159: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global AgentNeighborBuf* agentNeighbors, __global Line* orcaLines, __global Line* projLines, __global Agent* agentsForTree)
+                                                                                                                                                              ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:526:185: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global AgentNeighborBuf* agentNeighbors, __global Line* orcaLines, __global Line* projLines, __global Agent* agentsForTree)
+                                                                                                                                                                                        ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:526:212: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global AgentNeighborBuf* agentNeighbors, __global Line* orcaLines, __global Line* projLines, __global Agent* agentsForTree)
+                                                                                                                                                                                                                   ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:652:45: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+__kernel void updateCustom (__global Agent* agents, float timeStep, __global float4* positionsForRendering)
+                                            ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:652:86: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+__kernel void updateCustom (__global Agent* agents, float timeStep, __global float4* positionsForRendering)
+                                                                                     ^
+10 warnings generated.
+F=
+declare i32 @printf(i8*, ...)
+

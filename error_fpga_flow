@@ -1,0 +1,70 @@
+alex@alex-Latitude-E7240:~/Altera_CrowdSim/CrowdSim$ ./compile_emu.sh 
+aoc: Environment checks are completed successfully.
+You are now compiling the full flow!!
+aoc: Selected target board s5_ref
+aoc: Running OpenCL parser....
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:469:133: error: too few arguments to function call, expected 7, have 6
+            if (linearProgram2(projLines, numProjLines, radius, (Vector2)(-lines[i].direction.y, lines[i].direction.x), true, result) < numProjLines) {
+                ~~~~~~~~~~~~~~                                                                                                      ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:397:1: note: 'linearProgram2' declared here
+uint linearProgram2(const __global Line* lines, uint numLines, float radius, const Vector2 optVelocity, bool directionOpt, __global Vector2 *result, uint orcaBias)
+^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:485:110: error: must use 'struct' tag to refer to type '__AgentNeighbor'
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global __AgentNeighbor* agentNeighbors, __global __Line* orcaLines)
+                                                                                                             ^
+                                                                                                             struct 
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:485:152: error: must use 'struct' tag to refer to type '__Line'
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global __AgentNeighbor* agentNeighbors, __global __Line* orcaLines)
+                                                                                                                                                       ^
+                                                                                                                                                       struct 
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:509:45: error: use of undeclared identifier 'agentNeighbors_'; did you mean 'agentNeighbors'?
+        const __global Agent *const other = agentNeighbors_[neighborBias+i].second;
+                                            ^~~~~~~~~~~~~~~
+                                            agentNeighbors
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:485:127: note: 'agentNeighbors' declared here
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global __AgentNeighbor* agentNeighbors, __global __Line* orcaLines)
+                                                                                                                              ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:569:9: error: use of undeclared identifier 'orcaLines_'; did you mean 'orcaLines'?
+        orcaLines_[orcaBias + agent->numOrcaLines_++] = line;
+        ^~~~~~~~~~
+        orcaLines
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:485:160: note: 'orcaLines' declared here
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global __AgentNeighbor* agentNeighbors, __global __Line* orcaLines)
+                                                                                                                                                               ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:572:36: error: use of undeclared identifier 'orcaLines_'; did you mean 'orcaLines'?
+    uint lineFail = linearProgram2(orcaLines_, agent->numOrcaLines_, agent->maxSpeed_, agent->prefVelocity_, false, &agent->newVelocity_, orcaBias);
+                                   ^~~~~~~~~~
+                                   orcaLines
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:485:160: note: 'orcaLines' declared here
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global __AgentNeighbor* agentNeighbors, __global __Line* orcaLines)
+                                                                                                                                                               ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:575:146: error: too few arguments to function call, expected 8, have 7
+        linearProgram3(agent->orcaLines_, agent->numOrcaLines_, numObstLines, lineFail, agent->maxSpeed_, &agent->newVelocity_, agent->projLines_);
+        ~~~~~~~~~~~~~~                                                                                                                           ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:430:1: note: 'linearProgram3' declared here
+void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines, uint beginLine, float radius, __global Vector2 *result, __global Line* projLines, uint orcaBias)
+^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:485:41: error: Kernel argument cannot be a pointer to pointer(s)
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global __AgentNeighbor* agentNeighbors, __global __Line* orcaLines)
+                                        ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:485:73: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global __AgentNeighbor* agentNeighbors, __global __Line* orcaLines)
+                                                                        ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:485:127: error: Kernel argument cannot be a pointer to pointer(s)
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global __AgentNeighbor* agentNeighbors, __global __Line* orcaLines)
+                                                                                                                              ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:485:160: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global __AgentNeighbor* agentNeighbors, __global __Line* orcaLines)
+                                                                                                                                                               ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:583:39: error: Kernel argument cannot be a pointer to pointer(s)
+__kernel void update (__global Agent* agents, float timeStep)
+                                      ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:597:46: error: Kernel argument cannot be a pointer to pointer(s)
+__kernel void updateCustom (__global PAgent* agents, float timeStep, __global float4* positionsForRendering)
+                                             ^
+/home/alex/Altera_CrowdSim/CrowdSim/CrowdSim.cl:597:87: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+__kernel void updateCustom (__global PAgent* agents, float timeStep, __global float4* positionsForRendering)
+                                                                                      ^
+3 warnings and 11 errors generated.
+Error: OpenCL parser FAILED.
+Refer to CrowdSim_emu/CrowdSim.log for details.

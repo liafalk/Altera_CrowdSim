@@ -104,7 +104,23 @@ namespace RVO {
         Vector2 direction;
     };
 
+#pragma pack(4)
+    struct AgentNeighborBuf
+    {
+        cl_float first;
+        cl_uint second;
+
+        AgentNeighborBuf () {}
+
+        AgentNeighborBuf (const std::pair<float, unsigned>& pair) :
+            first(pair.first),
+            second(pair.second)
+        {
+        }
+    };
+
     struct Agent;
+    struct AgentNeighbor;
     class KdTree;
     struct Obstacle;
 
@@ -620,8 +636,9 @@ namespace RVO {
     private:
         std::vector<Agent *> agents_;
         std::vector<Agent> primitiveAgents;
-
-        std::vector<AgentNeighbor> neighborBuffer;
+        std::vector<Agent> primitiveAgentsForTree;
+        std::vector<AgentNeighborBuf> primitiveAgentNeighbor;
+        std::vector<Line> primitiveOrcaLines;
 
         Agent *defaultAgent_;
         float globalTime_;
@@ -644,9 +661,13 @@ namespace RVO {
         // Modified OpenCL1.x buffers
         cl_mem agentsBuffer;
         cl_mem treeBuffer;
+        cl_mem agentNeighborBuffer;
+        cl_mem orcaLineBuffer;
+        cl_mem projBuffer;
+        cl_mem agentsForTreeBuffer;
         
         friend struct Agent;
-        friend struct AgentNeighbor;
+        //friend struct AgentNeighbor;
         friend class KdTree;
         friend struct Obstacle;
     };

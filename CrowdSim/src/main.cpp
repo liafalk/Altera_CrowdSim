@@ -525,15 +525,10 @@ int main (int argc, const char** argv)
                 if(kernelTime > worst) worst = kernelTime;
                 totalKernel += kernelTime;
                 iteration++;
-
-                #ifdef INTEL_NOT_FOR_RELEASE
-                if(cmdparser.interactiveDiagnostics.isSet())
-                {
-                    printf("[ INFO ] Step %d of simulation was executed.\n", (int)iteration);
-                }
-                #endif
+                printf("[ INFO ] Step %d of simulation was executed.\n", (int)iteration);
 
                 cout.flush();
+                //std::cin.ignore();
             }
 
             printf("Simulation of %d agents completed correctly after %d frames\n", cmdparser.size.getValue(), iteration);

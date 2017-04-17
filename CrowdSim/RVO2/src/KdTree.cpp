@@ -141,13 +141,18 @@ namespace RVO {
         agentTree_[node].minX = agentTree_[node].maxX = agents_[begin]->position_.x();
         agentTree_[node].minY = agentTree_[node].maxY = agents_[begin]->position_.y();
 
+        if (node == 603) printf("%f (id=%u)\n", agents_[begin]->position_.x(), agents_[begin]->id_);
+
         for (size_t i = begin + 1; i < end; ++i) {
             agentTree_[node].maxX = std::max(agentTree_[node].maxX, agents_[i]->position_.x());
+            if (node == 603) printf("%f or %f (id=%u)\n", agentTree_[node].minX, agents_[i]->position_.x(), agents_[i]->id_);
             agentTree_[node].minX = std::min(agentTree_[node].minX, agents_[i]->position_.x());
+            if (node == 603) printf("Node %d minX: %f, agent i: %d\n", node, agentTree_[node].minX, i);
             agentTree_[node].maxY = std::max(agentTree_[node].maxY, agents_[i]->position_.y());
             agentTree_[node].minY = std::min(agentTree_[node].minY, agents_[i]->position_.y());
         }
-
+        
+        
         if (end - begin > MAX_LEAF_SIZE) {
             /* No leaf node. */
             const bool isVertical = (agentTree_[node].maxX - agentTree_[node].minX > agentTree_[node].maxY - agentTree_[node].minY);
