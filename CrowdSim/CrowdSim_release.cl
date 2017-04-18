@@ -494,7 +494,7 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
 
 __kernel
-void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global AgentNeighborBuf* agentNeighbors, __global Line* orcaLines, __global Line* projLines, __global Agent* agentsForTree)
+void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines, __global Agent* restrict agentsForTree)
 {
     __global Agent* agent = &agents[get_global_id(0)];
 
@@ -594,7 +594,7 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
 
 
 // Do regular update of current velocity and position for an agent
-__kernel void update (__global Agent* agents, float timeStep)
+__kernel void update (__global Agent* restrict agents, float timeStep)
 {
     int id = get_global_id(0);
     __global Agent* agent = &agents[id];
@@ -604,11 +604,11 @@ __kernel void update (__global Agent* agents, float timeStep)
     agent->position_ += agent->velocity_ * timeStep;
 }
 
-
+/*
 // Do regular update of current velocity and position for an agent
 // plus do update in side buffer to pack positions to be reused
 // during visualization step (for example).
-__kernel void updateCustom (__global Agent* agents, float timeStep, __global float4* positionsForRendering)
+__kernel void updateCustom (__global Agent* restrict agents, float timeStep, __global float4* restrict positionsForRendering)
 {
     int id = get_global_id(0);
     __global Agent* agent = &agents[id];
@@ -620,3 +620,4 @@ __kernel void updateCustom (__global Agent* agents, float timeStep, __global flo
     // Update side vector with agent coordinates
     positionsForRendering[id].xy = agent->position_.xy;
 }
+*/

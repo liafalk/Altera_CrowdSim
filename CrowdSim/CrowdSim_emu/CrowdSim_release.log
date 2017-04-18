@@ -1,0 +1,1 @@
+Compiler Command: aoc -march=emulator -v --board s5_ref CrowdSim_release.cl -o CrowdSim_emu.aocx
