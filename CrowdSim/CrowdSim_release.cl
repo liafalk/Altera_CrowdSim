@@ -23,8 +23,8 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
 #define TESTID 0
-typedef half simFloat;
-typedef half2 Vector2;
+typedef float simFloat;
+typedef float2 Vector2;
 
 // The following structures definitions use pack pragma
 // to eliminate any differencies between packing of struct
@@ -135,7 +135,7 @@ typedef struct __ObstacleTreeNode
 
 inline simFloat simFabs(simFloat a)
 {
-    if (a < (half)0.0f)
+    if (a < 0.0f)
         return -a;
     else
         return a;
@@ -148,7 +148,7 @@ inline simFloat simDot(Vector2 a, Vector2 b)
 
 inline simFloat simSqrt(simFloat a)
 {
-    return (half)sqrt((float)a);
+    return (simFloat)sqrt((float)a);
 }
 
 inline simFloat simLength(Vector2 a)
@@ -363,7 +363,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, simFloat radius, co
     const simFloat dotProduct = simDot(lines[orcaBias + lineNo].point, lines[orcaBias + lineNo].direction);
     const simFloat discriminant = sqr(dotProduct) + sqr(radius) - absSq(lines[orcaBias + lineNo].point);
 
-    if (discriminant < (half)0.0f) {
+    if (discriminant < 0.0f) {
         /* Max speed circle fully invalidates line lineNo. */
         return false;
     }
@@ -380,7 +380,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, simFloat radius, co
 
         if (simFabs(denominator) <= RVO_EPSILON) {
             /* Lines lineNo and i are (almost) parallel. */
-            if (numerator < (half)0.0f) {
+            if (numerator < 0.0f) {
                 returnnow = 1;
                 break;
             }
@@ -391,7 +391,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, simFloat radius, co
 
         const simFloat t = numerator / denominator;
 
-        if (denominator >= (half)0.0f) {
+        if (denominator >= 0.0f) {
             /* Line i bounds line lineNo on the right. */
             tRight = (tRight < t) ? tRight : t;
         }
@@ -411,7 +411,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, simFloat radius, co
 
     if (directionOpt) {
         /* Optimize direction. */
-        if (simDot(optVelocity, lines[orcaBias + lineNo].direction) > (half)0.0f) {
+        if (simDot(optVelocity, lines[orcaBias + lineNo].direction) > 0.0f) {
             /* Take right extreme. */
             *result = lines[orcaBias + lineNo].point + tRight * lines[orcaBias + lineNo].direction;
         }
@@ -459,7 +459,7 @@ uint linearProgram2(const __global Line* lines, uint numLines, simFloat radius, 
 
  
     for (uint i = 0; i < numLines; ++i) {  
-        if (det(lines[orcaBias + i].direction, lines[orcaBias + i].point - *result) > (half)0.0f) {
+        if (det(lines[orcaBias + i].direction, lines[orcaBias + i].point - *result) > 0.0f) {
             /* Result does not satisfy constraint i. Compute new optimal result. */
             const Vector2 tempResult = *result;
             if (!linearProgram1(lines, i, radius, optVelocity, directionOpt, result, orcaBias)) {
@@ -474,7 +474,7 @@ uint linearProgram2(const __global Line* lines, uint numLines, simFloat radius, 
 
 void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines, uint beginLine, simFloat radius, __global Vector2 *result, uint orcaBias, __global Line* projLines)
 {
-    simFloat distance = (half)0.0f;
+    simFloat distance = 0.0f;
 
     for (uint i = beginLine; i < numLines; ++i) {
         if (det(lines[orcaBias + i].direction, lines[orcaBias + i].point - *result) > distance) {
@@ -498,7 +498,7 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
                     }
                     else {
                         /* Line i and line j point in opposite direction. */
-                        line.point = (half)0.5f * (lines[orcaBias + i].point + lines[orcaBias + j].point);
+                        line.point = 0.5f * (lines[orcaBias + i].point + lines[orcaBias + j].point);
                     }
                 }
                 else {
@@ -612,7 +612,7 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
             u = (combinedRadius * invTimeStep - wLength) * unitW;
         }
 
-        line.point = velocity_ + (half)0.5f * u;
+        line.point = velocity_ + 0.5f * u;
         orcaLines[orcaBias + agent->numOrcaLines_++] = line;
     }
 
