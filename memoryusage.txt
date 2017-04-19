@@ -1,0 +1,89 @@
+[af2213@ee-snowball2 bin_CrowdSim]$ cat top.merge.summary
+Partition Merge Status : Successful - Tue Apr 18 14:09:56 2017
+Quartus II 64-Bit Version : 15.0.0 Build 145 04/22/2015 SJ Full Version
+Revision Name : top
+Top-level Entity Name : top
+Family : Stratix V
+Logic utilization (in ALMs) : 172,600 / 172,600 ( 100 % )
+Total registers : 378594
+Total pins : 385 / 664 ( 58 % )
+Total virtual pins : 32
+Total block memory bits : 81,866,997 / 41,246,720 ( 198 % )
+Total DSP Blocks : 221 / 1,590 ( 14 % )
+Total HSSI STD RX PCSs : 9 / 24 ( 38 % )
+Total HSSI 10G RX PCSs : 0 / 24 ( 0 % )
+Total HSSI GEN3 RX PCSs : 0 / 24 ( 0 % )
+Total HSSI PMA RX Deserializers : 8 / 24 ( 33 % )
+Total HSSI STD TX PCSs : 9 / 24 ( 38 % )
+Total HSSI 10G TX PCSs : 0 / 24 ( 0 % )
+Total HSSI GEN3 TX PCSs : 0 / 24 ( 0 % )
+Total HSSI PMA TX Serializers : 9 / 24 ( 38 % )
+Total HSSI PIPE GEN1_2s : 9 / 24 ( 38 % )
+Total HSSI GEN3s : 9 / 24 ( 38 % )
+Total PLLs : 13 / 60 ( 22 % )
+Total DLLs : 2 / 4 ( 50 % )
+
+[af2213@ee-snowball2 CrowdSim]$ aoc --report CrowdSim_release.cl
+aoc: Selected target board p385_hpc_d5
+Compiler Warning: Limiting maximum work-group size to 512 in function computeNewVelocity(...) to support private memory.
+Estimating throughput since $estimate_throughput=1
+Kernel throughput analysis for              : computeNewVelocity
+ .. simd work items                         : 1
+ .. compute units                           : 1
+ .. throughput due to control flow analysis : 1.39 K work items/second
+ .. kernel global memory bandwidth analysis : 5565.79 MB/second
+ .. kernel number of local memory banks     : 4
+ .. # of RAMs (local mem) / compute unit    : 128
+ .. kernel number of local memory masters   : 14
+ .. kernel local avg port fanin             : 3.5
+ .... reducing fmax because of connectivity : 176.8 MHz
+ .... local stalls derate throughput by     : 1.00 for [ computeNewVelocity.wii_blk ]
+ .... local stalls derate throughput by     : 1.00 for [ entry ]
+ .... local stalls derate throughput by     : 1.00 for [ entry.computeAgentNeighbors.exit_crit_edge.loopexit ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i.i.outer ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i.i.outer156 ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i.i ]
+ .... local stalls derate throughput by     : 1.00 for [ LeafBlock ]
+ .... local stalls derate throughput by     : 1.00 for [ for.body.i.i ]
+ .... local stalls derate throughput by     : 1.00 for [ while.cond.i.i.i ]
+ .... local stalls derate throughput by     : 1.00 for [ sw.bb101.i.i ]
+ .... local stalls derate throughput by     : 1.00 for [ sw.bb116.i.i ]
+ .... local stalls derate throughput by     : 1.00 for [ if.then118.i.i ]
+ .... local stalls derate throughput by     : 1.00 for [ for.body ]
+ .... local stalls derate throughput by     : 1.00 for [ for.end.loopexit.loopexit ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i82 ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i.i108 ]
+ .... local stalls derate throughput by     : 1.00 for [ if.else114.i.i ]
+ .... local stalls derate throughput by     : 1.00 for [ for.body.i ]
+ .... local stalls derate throughput by     : 1.00 for [ for.body16.i ]
+ .... local stalls derate throughput by     : 1.00 for [ for.end93.i.loopexit ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i.i15 ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i.i.i ]
+ .... local stalls derate throughput by     : 1.00 for [ if.end58.i.i.i ]
+ .... local stalls derate throughput by     : 1.00 for [ if.end123.loopexit.loopexit ]
+ .... local stalls derate throughput by     : 1.00 for [ while.cond.i.i.i.UnifiedLatchBlock.switch.loopexit ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i.i.outer156.UnifiedLatchBlock.switch ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i.i.outer156.UnifiedLatchBlock.switch478.loopexit ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i.i15.UnifiedLatchBlock.switch.loopexit ]
+ .... local stalls derate throughput by     : 1.00 for [ for.cond.i82.UnifiedLatchBlock.switch ]
+ ........ because of local stalls throughput: 1.02 K work items/second
+Kernel throughput analysis for              : update
+ .. simd work items                         : 1
+ .. compute units                           : 1
+ .. throughput due to control flow analysis : 240.00 M work items/second
+ .. kernel global memory bandwidth analysis : 8827.59 MB/second
+ .. kernel number of local memory banks     : none
+
++--------------------------------------------------------------------+
+; Estimated Resource Usage Summary                                   ;
++----------------------------------------+---------------------------+
+; Resource                               + Usage                     ;
++----------------------------------------+---------------------------+
+; Logic utilization                      ;  132%                     ;
+; Dedicated logic registers              ;   67%                     ;
+; Memory blocks                          ;  305%                     ;
+; DSP blocks                             ;   13%                     ;
++----------------------------------------+---------------------------;
+
+
+too much memory!
