@@ -388,7 +388,7 @@ namespace RVO {
                     }
                     
                     primitiveAgents.push_back(*agents_[i]);
-                    primitiveAgentsForTree.push_back(*(kdTree_->agents_[i]));
+                    primitiveAgentsForTree.push_back(kdTree_->agents_[i]->id_);
                     //printf("Copied agentForTree %d with pos (%f,%f)\n", i, primitiveAgentsForTree[i].position_.x(),primitiveAgentsForTree[i].position_.y());
                     //printf("Copied agent %d, id=%d with pos (%f,%f), numNeighbors=%d\n", i, agents_[i]->id_, primitiveAgents[i].position_.x(),primitiveAgents[i].position_.y(), agents_[i]->numAgentNeighbors_);
                     //agents_[i] = &primitiveAgents[i];
@@ -398,7 +398,7 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentsBuffer\n";
 
-                agentsForTreeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, newAgentsBufferSize, &primitiveAgentsForTree[0], &err);
+                agentsForTreeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(unsigned)*agents_.size(), &primitiveAgentsForTree[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentsForTreeBuffer\n";
 
@@ -437,13 +437,13 @@ namespace RVO {
                 primitiveAgentsForTree.clear();
                 for(int i=0; i<agents_.size(); ++i){              
                     primitiveAgents.push_back(*agents_[i]);
-                    primitiveAgentsForTree.push_back(*(kdTree_->agents_[i]));
+                    primitiveAgentsForTree.push_back(kdTree_->agents_[i]->id_);
                 }
 
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsBuffer, CL_TRUE, 0, newAgentsBufferSize, &primitiveAgents[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
 
-                err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsForTreeBuffer, CL_TRUE, 0, newAgentsBufferSize, &primitiveAgentsForTree[0], 0, NULL, NULL);
+                err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsForTreeBuffer, CL_TRUE, 0, sizeof(unsigned)*agents_.size(), &primitiveAgentsForTree[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);           
             }
 
@@ -467,7 +467,7 @@ namespace RVO {
             err = clSetKernelArg(kernelComputeNewVelocity_, 5 , sizeof(Line)*primitiveOrcaLines.size(), &projBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 6 , newAgentsBufferSize, &agentsForTreeBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 6 , sizeof(unsigned)*agents_.size(), &agentsForTreeBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
             size_t global_size = agents_.size();

@@ -636,7 +636,7 @@ namespace RVO {
     private:
         std::vector<Agent *> agents_;
         std::vector<Agent> primitiveAgents;
-        std::vector<Agent> primitiveAgentsForTree;
+        std::vector<unsigned> primitiveAgentsForTree;
         std::vector<AgentNeighborBuf> primitiveAgentNeighbor;
         std::vector<Line> primitiveOrcaLines;
 
