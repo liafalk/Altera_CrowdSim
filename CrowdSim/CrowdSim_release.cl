@@ -218,7 +218,7 @@ typedef struct __StackNode
     uint node;
 } StackNode;
 
-StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float distSqRight, uint node)
+__global StackNode* push (__global StackNode* stackNode, uint retCode, float distSqLeft, float distSqRight, uint node)
 {
     stackNode->retCode = retCode;
     stackNode->distSqLeft = distSqLeft;
@@ -227,10 +227,10 @@ StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float dis
     return stackNode + 1;
 }
 
-void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree)
+void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
-    StackNode stack[MAX_KDTREE_DEPTH];
-    StackNode* stackTop = &stack[0];
+    //StackNode stack[MAX_KDTREE_DEPTH];
+    __global StackNode* stackTop = &stack[0];
     uint retCode = 0;
 
     float distSqLeft;
@@ -308,7 +308,7 @@ void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __g
 }
 
 
-void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree)
+void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
     agent->numObstacleNeighbors_ = 0;
     float rangeSq = sqr(agent->timeHorizonObst_ * agent->maxSpeed_ + agent->radius_);
@@ -320,7 +320,7 @@ void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __glob
 
     if (agent->maxNeighbors_ > 0) {
         rangeSq = sqr(agent->neighborDist_);
-        queryAgentTreeRecursive(agents, agent, agentTree_, &rangeSq, 0, agentNeighbors, agentsForTree);
+        queryAgentTreeRecursive(agents, agent, agentTree_, &rangeSq, 0, agentNeighbors, agentsForTree, stack);
     }
 }
 
@@ -494,13 +494,13 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
 
 __kernel
-void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines, __global unsigned* restrict agentsForTree)
+void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines, __global unsigned* restrict agentsForTree, __global StackNode* stack)
 {
     __global Agent* agent = &agents[get_global_id(0)];
 
     #ifndef FORCE_C_NEIGHBORS_KERNEL
 
-    computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree);
+    computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree, stack);
 
     #endif
 
