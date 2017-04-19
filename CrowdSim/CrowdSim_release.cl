@@ -22,8 +22,8 @@
 #include "Constants.h"
 
 #define TESTID 0
-typedef float2 Vector2;
-
+typedef half2 Vector2;
+typedef simFloat half;
 // The following structures definitions use pack pragma
 // to eliminate any differencies between packing of struct
 // data fields in the host and the device sides.
@@ -54,21 +54,21 @@ typedef struct __Obstacle
 #pragma pack(4)
 typedef struct __AgentNeighbor
 {
-    float first;
+    simFloat first;
     __global const struct __Agent * second;
 } AgentNeighbor;
 
 #pragma pack(4)
 typedef struct __AgentNeighborBuf
 {
-    float first;
+    simFloat first;
     uint second;
 } AgentNeighborBuf;
 
 #pragma pack(4)
 typedef struct __ObstacleNeighbor
 {
-    float first;
+    simFloat first;
     __global const struct __Obstacle * second;
 } ObstacleNeighbor;
 
@@ -79,8 +79,8 @@ typedef struct __Agent {
     long spacer1;
     uint numAgentNeighbors_; // number of filled elements in agentNeighbors
     uint maxNeighbors_;
-    float maxSpeed_;
-    float neighborDist_;
+    simFloat maxSpeed_;
+    simFloat neighborDist_;
     Vector2 newVelocity_;
     //__global ObstacleNeighbor* obstacleNeighbors_;
     long spacer2;
@@ -93,11 +93,11 @@ typedef struct __Agent {
     long spacer4;
     Vector2 position_;
     Vector2 prefVelocity_;
-    float radius_;
+    simFloat radius_;
     //__global void *sim_;
     long spacer5;
-    float timeHorizon_;
-    float timeHorizonObst_;
+    simFloat timeHorizon_;
+    simFloat timeHorizonObst_;
     Vector2 velocity_;
     uint id_;
 } Agent;
@@ -116,10 +116,10 @@ typedef struct __AgentTreeNode
     uint begin;
     uint end;
     uint left;
-    float maxX;
-    float maxY;
-    float minX;
-    float minY;
+    simFloat maxX;
+    simFloat maxY;
+    simFloat minX;
+    simFloat minY;
     uint right;
 } AgentTreeNode;
 
@@ -132,28 +132,28 @@ typedef struct __ObstacleTreeNode
 } ObstacleTreeNode;
 
 
-inline float absSq(Vector2 vector)
+inline simFloat absSq(Vector2 vector)
 {
     return dot(vector, vector);
 }
 
 
-inline float det(Vector2 vector1, Vector2 vector2)
+inline simFloat det(Vector2 vector1, Vector2 vector2)
 {
     return vector1.x * vector2.y - vector1.y * vector2.x;
 }
 
 
-inline float sqr (float x)
+inline simFloat sqr (simFloat x)
 {
     return x*x;
 }
 
 /*
-void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent, float *rangeSq)
+void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent, simFloat *rangeSq)
 {
     if (thisAgent != agent) {
-        const float distSq = absSq(thisAgent->position_ - agent->position_);
+        const simFloat distSq = absSq(thisAgent->position_ - agent->position_);
 
         if (distSq < *rangeSq) {
             if (thisAgent->numAgentNeighbors_ < thisAgent->maxNeighbors_) {
@@ -180,10 +180,10 @@ void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent,
 }
 */
 
-void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent, float *rangeSq, __global AgentNeighborBuf* agentNeighbors)
+void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent, simFloat *rangeSq, __global AgentNeighborBuf* agentNeighbors)
 {
     if (thisAgent->id_ != agent->id_) {
-        const float distSq = absSq(thisAgent->position_ - agent->position_);
+        const simFloat distSq = absSq(thisAgent->position_ - agent->position_);
 
         if (distSq < *rangeSq) {
             uint indexBias = thisAgent->maxNeighbors_*get_global_id(0);
@@ -213,12 +213,12 @@ void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent,
 typedef struct __StackNode
 {
     uint retCode;
-    float distSqLeft;
-    float distSqRight;
+    simFloat distSqLeft;
+    simFloat distSqRight;
     uint node;
 } StackNode;
 
-StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float distSqRight, uint node)
+__global StackNode* push (__global StackNode* stackNode, uint retCode, simFloat distSqLeft, simFloat distSqRight, uint node)
 {
     stackNode->retCode = retCode;
     stackNode->distSqLeft = distSqLeft;
@@ -227,14 +227,14 @@ StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float dis
     return stackNode + 1;
 }
 
-void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree)
+void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, simFloat* rangeSq, uint node, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
-    StackNode stack[MAX_KDTREE_DEPTH];
-    StackNode* stackTop = &stack[0];
+    //StackNode stack[MAX_KDTREE_DEPTH];
+    __global StackNode* stackTop = &stack[0];
     uint retCode = 0;
 
-    float distSqLeft;
-    float distSqRight;
+    simFloat distSqLeft;
+    simFloat distSqRight;
 
     for(;;)
     {
@@ -308,10 +308,10 @@ void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __g
 }
 
 
-void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree)
+void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
     agent->numObstacleNeighbors_ = 0;
-    float rangeSq = sqr(agent->timeHorizonObst_ * agent->maxSpeed_ + agent->radius_);
+    simFloat rangeSq = sqr(agent->timeHorizonObst_ * agent->maxSpeed_ + agent->radius_);
         
     // Obstacles are not processed. This is current limitation of this OpenCL port
     // sim_->kdTree_->computeObstacleNeighbors(this, rangeSq);
@@ -320,30 +320,30 @@ void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __glob
 
     if (agent->maxNeighbors_ > 0) {
         rangeSq = sqr(agent->neighborDist_);
-        queryAgentTreeRecursive(agents, agent, agentTree_, &rangeSq, 0, agentNeighbors, agentsForTree);
+        queryAgentTreeRecursive(agents, agent, agentTree_, &rangeSq, 0, agentNeighbors, agentsForTree, stack);
     }
 }
 
 
-bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const Vector2 optVelocity, bool directionOpt, __global Vector2 *result, uint orcaBias)
+bool linearProgram1(const __global Line* lines, uint lineNo, simFloat radius, const Vector2 optVelocity, bool directionOpt, __global Vector2 *result, uint orcaBias)
 {
-    const float dotProduct = dot(lines[orcaBias + lineNo].point, lines[orcaBias + lineNo].direction);
-    const float discriminant = sqr(dotProduct) + sqr(radius) - absSq(lines[orcaBias + lineNo].point);
+    const simFloat dotProduct = dot(lines[orcaBias + lineNo].point, lines[orcaBias + lineNo].direction);
+    const simFloat discriminant = sqr(dotProduct) + sqr(radius) - absSq(lines[orcaBias + lineNo].point);
 
     if (discriminant < 0.0f) {
         /* Max speed circle fully invalidates line lineNo. */
         return false;
     }
 
-    const float sqrtDiscriminant = sqrt(discriminant);
-    float tLeft = -dotProduct - sqrtDiscriminant;
-    float tRight = -dotProduct + sqrtDiscriminant;
+    const simFloat sqrtDiscriminant = sqrt(discriminant);
+    simFloat tLeft = -dotProduct - sqrtDiscriminant;
+    simFloat tRight = -dotProduct + sqrtDiscriminant;
 
     int returnnow = 0;
 
     for (uint i = 0; i < lineNo; ++i) {
-        const float denominator = det(lines[orcaBias + lineNo].direction, lines[orcaBias + i].direction);
-        const float numerator = det(lines[orcaBias + i].direction, lines[orcaBias + lineNo].point - lines[orcaBias + i].point);
+        const simFloat denominator = det(lines[orcaBias + lineNo].direction, lines[orcaBias + i].direction);
+        const simFloat numerator = det(lines[orcaBias + i].direction, lines[orcaBias + lineNo].point - lines[orcaBias + i].point);
 
         if (fabs(denominator) <= RVO_EPSILON) {
             /* Lines lineNo and i are (almost) parallel. */
@@ -356,7 +356,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
             }
         }
 
-        const float t = numerator / denominator;
+        const simFloat t = numerator / denominator;
 
         if (denominator >= 0.0f) {
             /* Line i bounds line lineNo on the right. */
@@ -389,7 +389,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
     }
     else {
         /* Optimize closest point. */
-        const float t = dot(lines[orcaBias + lineNo].direction, (optVelocity - lines[orcaBias + lineNo].point));
+        const simFloat t = dot(lines[orcaBias + lineNo].direction, (optVelocity - lines[orcaBias + lineNo].point));
 
         if (t < tLeft) {
             *result = lines[orcaBias + lineNo].point + tLeft * lines[orcaBias + lineNo].direction;
@@ -405,7 +405,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
     return true;
 }
 
-uint linearProgram2(const __global Line* lines, uint numLines, float radius, const Vector2 optVelocity, bool directionOpt, __global Vector2 *result, uint orcaBias)
+uint linearProgram2(const __global Line* lines, uint numLines, simFloat radius, const Vector2 optVelocity, bool directionOpt, __global Vector2 *result, uint orcaBias)
 {
     
     if (directionOpt) {
@@ -439,9 +439,9 @@ uint linearProgram2(const __global Line* lines, uint numLines, float radius, con
     return numLines;
 }
 
-void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines, uint beginLine, float radius, __global Vector2 *result, uint orcaBias, __global Line* projLines)
+void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines, uint beginLine, simFloat radius, __global Vector2 *result, uint orcaBias, __global Line* projLines)
 {
-    float distance = 0.0f;
+    simFloat distance = 0.0f;
 
     for (uint i = beginLine; i < numLines; ++i) {
         if (det(lines[orcaBias + i].direction, lines[orcaBias + i].point - *result) > distance) {
@@ -455,7 +455,7 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
             for (uint j = numObstLines; j < i; ++j) {
                 Line line;
 
-                float determinant = det(lines[orcaBias + i].direction, lines[orcaBias + j].direction);
+                simFloat determinant = det(lines[orcaBias + i].direction, lines[orcaBias + j].direction);
 
                 if (fabs(determinant) <= RVO_EPSILON) {
                     /* Line i and line j are parallel. */
@@ -481,7 +481,7 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
             if (linearProgram2(projLines, numProjLines, radius, (Vector2)(-lines[orcaBias + i].direction.y, lines[orcaBias + i].direction.x), true, result, orcaBias) < numProjLines) {
                 /* This should in principle not happen.  The result is by definition
                     * already in the feasible region of this linear program. If it fails,
-                    * it is due to small floating point error, and the current result is
+                    * it is due to small simFloating point error, and the current result is
                     * kept.
                     */
                 *result = tempResult;
@@ -494,13 +494,13 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
 
 __kernel
-void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines, __global unsigned* restrict agentsForTree)
+void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, simFloat timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines, __global unsigned* restrict agentsForTree, __global StackNode* stack)
 {
     __global Agent* agent = &agents[get_global_id(0)];
 
     #ifndef FORCE_C_NEIGHBORS_KERNEL
 
-    computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree);
+    computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree, stack);
 
     #endif
 
@@ -508,13 +508,13 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
     #ifndef FORCE_C_VELOCITY_KERNEL
 
     agent->numOrcaLines_ = 0;
-    float radius_ = agent->radius_;
+    simFloat radius_ = agent->radius_;
     Vector2 position_ = agent->position_;
     Vector2 velocity_ = agent->velocity_;
 
     const uint numObstLines = agent->numOrcaLines_;
 
-    const float invTimeHorizon = 1.0f / agent->timeHorizon_;
+    const simFloat invTimeHorizon = 1.0f / agent->timeHorizon_;
     uint neighborBias = agent->maxNeighbors_*get_global_id(0);
     uint orcaBias = (agent->maxNeighbors_ + agent->maxObstacleNeighbors_)*get_global_id(0);
 
@@ -524,9 +524,9 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
 
         const Vector2 relativePosition = other->position_ - position_;
         const Vector2 relativeVelocity = velocity_ - other->velocity_;
-        const float distSq = absSq(relativePosition);
-        const float combinedRadius = radius_ + other->radius_;
-        const float combinedRadiusSq = sqr(combinedRadius);
+        const simFloat distSq = absSq(relativePosition);
+        const simFloat combinedRadius = radius_ + other->radius_;
+        const simFloat combinedRadiusSq = sqr(combinedRadius);
 
         Line line;
         Vector2 u;
@@ -535,13 +535,13 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
             /* No collision. */
             const Vector2 w = relativeVelocity - invTimeHorizon * relativePosition;
             /* Vector from cutoff center to relative velocity. */
-            const float wLengthSq = absSq(w);
+            const simFloat wLengthSq = absSq(w);
 
-            const float dotProduct1 = dot(w, relativePosition);
+            const simFloat dotProduct1 = dot(w, relativePosition);
 
             if (dotProduct1 < 0.0f && sqr(dotProduct1) > combinedRadiusSq * wLengthSq) {
                 /* Project on cut-off circle. */
-                const float wLength = sqrt(wLengthSq);
+                const simFloat wLength = sqrt(wLengthSq);
                 const Vector2 unitW = w / wLength;
 
                 line.direction = (Vector2)(unitW.y, -unitW.x);
@@ -549,7 +549,7 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
             }
             else {
                 /* Project on legs. */
-                const float leg = sqrt(distSq - combinedRadiusSq);
+                const simFloat leg = sqrt(distSq - combinedRadiusSq);
 
                 if (det(relativePosition, w) > 0.0f) {
                     /* Project on left leg. */
@@ -560,19 +560,19 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
                     line.direction = -(Vector2)(relativePosition.x * leg + relativePosition.y * combinedRadius, -relativePosition.x * combinedRadius + relativePosition.y * leg) / distSq;
                 }
 
-                const float dotProduct2 = dot(relativeVelocity, line.direction);
+                const simFloat dotProduct2 = dot(relativeVelocity, line.direction);
 
                 u = dotProduct2 * line.direction - relativeVelocity;
             }
         }
         else {
             /* Collision. Project on cut-off circle of time timeStep. */
-            const float invTimeStep = 1.0f / timeStep;
+            const simFloat invTimeStep = 1.0f / timeStep;
 
             /* Vector from cutoff center to relative velocity. */
             const Vector2 w = relativeVelocity - invTimeStep * relativePosition;
 
-            const float wLength = length(w);
+            const simFloat wLength = length(w);
             const Vector2 unitW = w / wLength;
 
             line.direction = (Vector2)(unitW.y, -unitW.x);
@@ -594,7 +594,7 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
 
 
 // Do regular update of current velocity and position for an agent
-__kernel void update (__global Agent* restrict agents, float timeStep)
+__kernel void update (__global Agent* restrict agents, simFloat timeStep)
 {
     int id = get_global_id(0);
     __global Agent* agent = &agents[id];
@@ -608,7 +608,7 @@ __kernel void update (__global Agent* restrict agents, float timeStep)
 // Do regular update of current velocity and position for an agent
 // plus do update in side buffer to pack positions to be reused
 // during visualization step (for example).
-__kernel void updateCustom (__global Agent* restrict agents, float timeStep, __global float4* restrict positionsForRendering)
+__kernel void updateCustom (__global Agent* restrict agents, simFloat timeStep, __global simFloat4* restrict positionsForRendering)
 {
     int id = get_global_id(0);
     __global Agent* agent = &agents[id];
