@@ -133,25 +133,41 @@ typedef struct __ObstacleTreeNode
     __global struct __ObstacleTreeNode *right;
 } ObstacleTreeNode;
 
-inline simFloat dot(Vector2 a, Vector2 b)
+inline simFloat simFabs(simFloat a)
+{
+    if (a < (half)0.0f)
+        return -a;
+    else
+        return a;
+}
+
+inline simFloat simDot(Vector2 a, Vector2 b)
 {
     return a.x*b.x+a.y*b.y;
 }
 
-inline simFloat length(Vector2 a)
+inline simFloat simSqrt(simFloat a)
 {
-    return sqrt(a.x^2+a.y^2);
+    return (half)sqrt((float)a);
 }
 
-inline simFloat normalize(Vector2 a)
+inline simFloat simLength(Vector2 a)
 {
-    simFloat len = length(a);
-    return {a.x/a, a.y/a};
+    return simSqrt(a.x*a.x+a.y*a.y);
+}
+
+inline Vector2 simNormalize(Vector2 a)
+{
+    simFloat len = simLength(a);
+    Vector2 res;
+    res.x = a.x/len;
+    res.y = a.y/len;
+    return res;
 }
 
 inline simFloat absSq(Vector2 vector)
 {
-    return dot(vector, vector);
+    return simDot(vector, vector);
 }
 
 
@@ -344,15 +360,15 @@ void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __glob
 
 bool linearProgram1(const __global Line* lines, uint lineNo, simFloat radius, const Vector2 optVelocity, bool directionOpt, __global Vector2 *result, uint orcaBias)
 {
-    const simFloat dotProduct = dot(lines[orcaBias + lineNo].point, lines[orcaBias + lineNo].direction);
+    const simFloat dotProduct = simDot(lines[orcaBias + lineNo].point, lines[orcaBias + lineNo].direction);
     const simFloat discriminant = sqr(dotProduct) + sqr(radius) - absSq(lines[orcaBias + lineNo].point);
 
-    if (discriminant < 0.0f) {
+    if (discriminant < (half)0.0f) {
         /* Max speed circle fully invalidates line lineNo. */
         return false;
     }
 
-    const simFloat sqrtDiscriminant = sqrt(discriminant);
+    const simFloat sqrtDiscriminant = simSqrt(discriminant);
     simFloat tLeft = -dotProduct - sqrtDiscriminant;
     simFloat tRight = -dotProduct + sqrtDiscriminant;
 
@@ -362,9 +378,9 @@ bool linearProgram1(const __global Line* lines, uint lineNo, simFloat radius, co
         const simFloat denominator = det(lines[orcaBias + lineNo].direction, lines[orcaBias + i].direction);
         const simFloat numerator = det(lines[orcaBias + i].direction, lines[orcaBias + lineNo].point - lines[orcaBias + i].point);
 
-        if (fabs(denominator) <= RVO_EPSILON) {
+        if (simFabs(denominator) <= RVO_EPSILON) {
             /* Lines lineNo and i are (almost) parallel. */
-            if (numerator < 0.0f) {
+            if (numerator < (half)0.0f) {
                 returnnow = 1;
                 break;
             }
@@ -375,13 +391,13 @@ bool linearProgram1(const __global Line* lines, uint lineNo, simFloat radius, co
 
         const simFloat t = numerator / denominator;
 
-        if (denominator >= 0.0f) {
+        if (denominator >= (half)0.0f) {
             /* Line i bounds line lineNo on the right. */
-            tRight = min(tRight, t);
+            tRight = (tRight < t) ? tRight : t;
         }
         else {
             /* Line i bounds line lineNo on the left. */
-            tLeft = max(tLeft, t);
+            tLeft = (tLeft > t) ? tLeft : t;
         }
 
         if (tLeft > tRight) {
@@ -395,7 +411,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, simFloat radius, co
 
     if (directionOpt) {
         /* Optimize direction. */
-        if (dot(optVelocity, lines[orcaBias + lineNo].direction) > 0.0f) {
+        if (simDot(optVelocity, lines[orcaBias + lineNo].direction) > (half)0.0f) {
             /* Take right extreme. */
             *result = lines[orcaBias + lineNo].point + tRight * lines[orcaBias + lineNo].direction;
         }
@@ -406,7 +422,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, simFloat radius, co
     }
     else {
         /* Optimize closest point. */
-        const simFloat t = dot(lines[orcaBias + lineNo].direction, (optVelocity - lines[orcaBias + lineNo].point));
+        const simFloat t = simDot(lines[orcaBias + lineNo].direction, (optVelocity - lines[orcaBias + lineNo].point));
 
         if (t < tLeft) {
             *result = lines[orcaBias + lineNo].point + tLeft * lines[orcaBias + lineNo].direction;
@@ -434,7 +450,7 @@ uint linearProgram2(const __global Line* lines, uint numLines, simFloat radius, 
     }
     else if (absSq(optVelocity) > sqr(radius)) {
         /* Optimize closest point and outside circle. */  
-        *result = normalize(optVelocity) * radius;
+        *result = simNormalize(optVelocity) * radius;
     }
     else {
         /* Optimize closest point and inside circle. */ 
@@ -443,7 +459,7 @@ uint linearProgram2(const __global Line* lines, uint numLines, simFloat radius, 
 
  
     for (uint i = 0; i < numLines; ++i) {  
-        if (det(lines[orcaBias + i].direction, lines[orcaBias + i].point - *result) > 0.0f) {
+        if (det(lines[orcaBias + i].direction, lines[orcaBias + i].point - *result) > (half)0.0f) {
             /* Result does not satisfy constraint i. Compute new optimal result. */
             const Vector2 tempResult = *result;
             if (!linearProgram1(lines, i, radius, optVelocity, directionOpt, result, orcaBias)) {
@@ -458,7 +474,7 @@ uint linearProgram2(const __global Line* lines, uint numLines, simFloat radius, 
 
 void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines, uint beginLine, simFloat radius, __global Vector2 *result, uint orcaBias, __global Line* projLines)
 {
-    simFloat distance = 0.0f;
+    simFloat distance = (half)0.0f;
 
     for (uint i = beginLine; i < numLines; ++i) {
         if (det(lines[orcaBias + i].direction, lines[orcaBias + i].point - *result) > distance) {
@@ -474,22 +490,22 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
                 simFloat determinant = det(lines[orcaBias + i].direction, lines[orcaBias + j].direction);
 
-                if (fabs(determinant) <= RVO_EPSILON) {
+                if (simFabs(determinant) <= RVO_EPSILON) {
                     /* Line i and line j are parallel. */
-                    if (dot(lines[orcaBias + i].direction, lines[orcaBias + j].direction) > 0.0f) {
+                    if (simDot(lines[orcaBias + i].direction, lines[orcaBias + j].direction) > 0.0f) {
                         /* Line i and line j point in the same direction. */
                         continue;
                     }
                     else {
                         /* Line i and line j point in opposite direction. */
-                        line.point = 0.5f * (lines[orcaBias + i].point + lines[orcaBias + j].point);
+                        line.point = (half)0.5f * (lines[orcaBias + i].point + lines[orcaBias + j].point);
                     }
                 }
                 else {
                     line.point = lines[orcaBias + i].point + (det(lines[orcaBias + j].direction, lines[orcaBias + i].point - lines[orcaBias + j].point) / determinant) * lines[orcaBias + i].direction;
                 }
 
-                line.direction = normalize(lines[orcaBias + j].direction - lines[orcaBias + i].direction);
+                line.direction = simNormalize(lines[orcaBias + j].direction - lines[orcaBias + i].direction);
                 projLines[numProjLines++] = line;
             }
 
@@ -554,11 +570,11 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
             /* Vector from cutoff center to relative velocity. */
             const simFloat wLengthSq = absSq(w);
 
-            const simFloat dotProduct1 = dot(w, relativePosition);
+            const simFloat dotProduct1 = simDot(w, relativePosition);
 
             if (dotProduct1 < 0.0f && sqr(dotProduct1) > combinedRadiusSq * wLengthSq) {
                 /* Project on cut-off circle. */
-                const simFloat wLength = sqrt(wLengthSq);
+                const simFloat wLength = simSqrt(wLengthSq);
                 const Vector2 unitW = w / wLength;
 
                 line.direction = (Vector2)(unitW.y, -unitW.x);
@@ -566,7 +582,7 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
             }
             else {
                 /* Project on legs. */
-                const simFloat leg = sqrt(distSq - combinedRadiusSq);
+                const simFloat leg = simSqrt(distSq - combinedRadiusSq);
 
                 if (det(relativePosition, w) > 0.0f) {
                     /* Project on left leg. */
@@ -577,7 +593,7 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
                     line.direction = -(Vector2)(relativePosition.x * leg + relativePosition.y * combinedRadius, -relativePosition.x * combinedRadius + relativePosition.y * leg) / distSq;
                 }
 
-                const simFloat dotProduct2 = dot(relativeVelocity, line.direction);
+                const simFloat dotProduct2 = simDot(relativeVelocity, line.direction);
 
                 u = dotProduct2 * line.direction - relativeVelocity;
             }
@@ -589,14 +605,14 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
             /* Vector from cutoff center to relative velocity. */
             const Vector2 w = relativeVelocity - invTimeStep * relativePosition;
 
-            const simFloat wLength = length(w);
+            const simFloat wLength = simLength(w);
             const Vector2 unitW = w / wLength;
 
             line.direction = (Vector2)(unitW.y, -unitW.x);
             u = (combinedRadius * invTimeStep - wLength) * unitW;
         }
 
-        line.point = velocity_ + 0.5f * u;
+        line.point = velocity_ + (half)0.5f * u;
         orcaLines[orcaBias + agent->numOrcaLines_++] = line;
     }
 
