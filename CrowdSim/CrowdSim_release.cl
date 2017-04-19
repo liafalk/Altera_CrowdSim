@@ -20,10 +20,12 @@
 
 
 #include "Constants.h"
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
 #define TESTID 0
+typedef half simFloat;
 typedef half2 Vector2;
-typedef simFloat half;
+
 // The following structures definitions use pack pragma
 // to eliminate any differencies between packing of struct
 // data fields in the host and the device sides.
@@ -131,6 +133,21 @@ typedef struct __ObstacleTreeNode
     __global struct __ObstacleTreeNode *right;
 } ObstacleTreeNode;
 
+inline simFloat dot(Vector2 a, Vector2 b)
+{
+    return a.x*b.x+a.y*b.y;
+}
+
+inline simFloat length(Vector2 a)
+{
+    return sqrt(a.x^2+a.y^2);
+}
+
+inline simFloat normalize(Vector2 a)
+{
+    simFloat len = length(a);
+    return {a.x/a, a.y/a};
+}
 
 inline simFloat absSq(Vector2 vector)
 {
@@ -494,7 +511,7 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
 
 __kernel
-void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, simFloat timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines, __global unsigned* restrict agentsForTree, __global StackNode* stack)
+void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, simFloat timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines, __global unsigned* restrict agentsForTree, __global StackNode* restrict stack)
 {
     __global Agent* agent = &agents[get_global_id(0)];
 
