@@ -52,7 +52,7 @@ public:
     );
 
     void Step(float in_deltaT);
-	bool StepNoGraphics(double *pKernelTime);
+	bool StepNoGraphics(double *pKernelTime, int iteration);
     bool isSimulationDone () const;
 
     // Call Shutdown before destroying the GL renderer, GL context, and window

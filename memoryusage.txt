@@ -87,3 +87,33 @@ Kernel throughput analysis for              : update
 
 
 too much memory!
+
+
+after getting rid of stacknode
+
+
+1 warning generated.
+Estimating throughput since $estimate_throughput=1
+Kernel throughput analysis for              : computeNewVelocity
+ .. simd work items                         : 1
+ .. compute units                           : 1
+ .. throughput due to control flow analysis : 1.39 K work items/second
+ .. kernel global memory bandwidth analysis : 5600.31 MB/second
+ .. kernel number of local memory banks     : none 
+Kernel throughput analysis for              : update
+ .. simd work items                         : 1
+ .. compute units                           : 1
+ .. throughput due to control flow analysis : 240.00 M work items/second
+ .. kernel global memory bandwidth analysis : 8827.59 MB/second
+ .. kernel number of local memory banks     : none 
+
++--------------------------------------------------------------------+
+; Estimated Resource Usage Summary                                   ;
++----------------------------------------+---------------------------+
+; Resource                               + Usage                     ;
++----------------------------------------+---------------------------+
+; Logic utilization                      ;  136%                     ;
+; Dedicated logic registers              ;   70%                     ;
+; Memory blocks                          ;  111%                     ;
+; DSP blocks                             ;   13%                     ;
++----------------------------------------+---------------------------;

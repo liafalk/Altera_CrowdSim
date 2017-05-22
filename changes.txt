@@ -25,3 +25,9 @@ typedef struct __PAgent
 {
     __global Agent* value;
 } PAgent;
+
+
+in addAgent, remove SVM =
+agent->allocateBuffers(svmAllocator);
+
+However now have to define values to 0 as they are not zeroed (don't know why) num Agent Neighbors and num ORCA lines.

@@ -18,7 +18,7 @@
 // Intel Corporation is the author of the Materials, and requests that all
 // problem reports or change requests be submitted to it directly
 
-
+#include "bitmap_image.hpp"
 #include <stdio.h>
 #include <cstdio>
 #include <iostream>
@@ -45,6 +45,7 @@ struct Vector4
 // 4 marching bands on a collision course.
 void SimulateCL::setupScenario4(RVOSimulator* sim)
 {
+    printf("[ INFO ] Beginning scenario4 setup.\n");
     int width = (int)ceil(sqrt((float)cmdparser->size.getValue()/4));  // width (and height) of a group of agents.
     if(width < 1) width = 1;
     // Specify the global time step of the simulation. 
@@ -59,9 +60,12 @@ void SimulateCL::setupScenario4(RVOSimulator* sim)
     Vector4* pPoints = (Vector4 *) m_agents;
     int rest_num_agents = int(cmdparser->size.getValue()); // track how many agents rest to be placed
 
+    
     for (int i = 0; i < width && rest_num_agents; ++i) {
         for (int j = 0; j < width && rest_num_agents; ++j) {
+            
             sim->addAgent(Vector2(float(i*d+(sep + 1)), float(j*d+(sep + 2))));
+            
             pPoints[gid].w = 1.0;  // green, see shader code.
             pPoints[gid].z = -25;
             goals[gid++] = Vector2(float(-j*d-(sep + 1)), float(-i*d-(sep+2)));
@@ -226,14 +230,15 @@ void SimulateCL::Init (
     crowd_sim = new RVOSimulator(
         oclobjects,
         cmdparser,
-        /*cmdparser->no_graphics.getValue()*/ 1 || cmdparser->no_gl_sharing.getValue() ? 0 : m_points
+        //cmdparser->no_graphics.getValue() || cmdparser->no_gl_sharing.getValue() ? 0 : m_points
+        m_points
     );
 
     printf("[ INFO ] Created RVOSimulator.\n");
     cout.flush();
 
     setupScenario4(crowd_sim);
-
+    printf("[ INFO ] Finish scenario setup.\n");
     if(!cmdparser->no_graphics.getValue())
     {
         if(!cmdparser->no_gl_sharing.getValue())
@@ -301,7 +306,7 @@ void SimulateCL::Step(float in_deltaT)
             SAMPLE_CHECK_ERRORS(status);
         }
 
-        StepNoGraphics(&kernelTime);
+        StepNoGraphics(&kernelTime, 0);
 
         if(cmdparser->no_opencl.getValue() || cmdparser->no_gl_sharing.getValue())
         {
@@ -344,7 +349,7 @@ void SimulateCL::Step(float in_deltaT)
 }
 
 // returns false when all entities have reached their destinations
-bool SimulateCL::StepNoGraphics(double *pKernelTime)
+bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
 {    
     #ifdef INTEL_NOT_FOR_RELEASE
     if(cmdparser->interactiveDiagnostics.getValue())
@@ -381,6 +386,18 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime)
 #define TESTID 0
     printf("Agent 0's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", 
         crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
+
+    cartesian_canvas canvas(399,399);
+    canvas.image().clear(255);
+
+    canvas.pen_width(3);
+    canvas.pen_color(255, 0, 0);
+    canvas.fill_circle(255,0,0);
+
+    for (int i=0; i<crowd_sim->getNumAgents(); ++i){
+        canvas.circle(crowd_sim->getAgentPosition(i).x(),crowd_sim->getAgentPosition(i).y(),1);
+    }
+    canvas.image().save_image("output/" + std::to_string(iteration) + ".bmp");
 
     bool ret = !reachedGoal(crowd_sim);
 

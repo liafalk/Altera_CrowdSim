@@ -85,6 +85,7 @@ namespace RVO {
 
             string exeDir = exe_dir();
 
+/*
             #ifdef INTEL_NOT_FOR_RELEASE
             openCLProgram_ = new OpenCLProgramMultipleKernels(
                 *oclobjects_,
@@ -120,11 +121,11 @@ namespace RVO {
                     )
             );
             #else
-
+*/
             //openCLProgram_ = new OpenCLProgramMultipleKernels(*oclobjects_, L"CrowdSim_OG.cl", "", "-I \"" + exeDir + "\" -cl-std=CL2.0");
             openCLProgram_ = new OpenCLProgramMultipleKernels(*oclobjects_, L"CrowdSim.cl", "", "-I \"" + exeDir + "\" -cl-std=CL1.2");
 
-            #endif
+//            #endif
 
             kernelComputeNewVelocity_ = (*openCLProgram_)["computeNewVelocity"];
             kernelUpdate_ = (*openCLProgram_)[customUpdateBuffer_ ? "updateCustom" : "update"];
@@ -146,7 +147,7 @@ namespace RVO {
     {
         kdTree_ = new KdTree(this);
         defaultAgent_ = new Agent(this);
-
+        
         defaultAgent_->maxNeighbors_ = cl_uint(maxNeighbors);
         defaultAgent_->maxSpeed_ = maxSpeed;
         defaultAgent_->neighborDist_ = neighborDist;
@@ -203,16 +204,19 @@ namespace RVO {
 
         Agent* agent = 0;
 
-        if(!cmdparser_->no_opencl.getValue())
+        if(0 && !cmdparser_->no_opencl.getValue())
         {
             agent =  new (svmAllocator->allocate(sizeof(Agent))) Agent(this);
         }
         else
         {
+            
             agent = new Agent(this);
         }
 
         agent->position_ = position;
+        agent->numAgentNeighbors_ = 0;
+        agent->numOrcaLines_ = 0;
         agent->maxNeighbors_ = defaultAgent_->maxNeighbors_;
         agent->maxSpeed_ = defaultAgent_->maxSpeed_;
         agent->neighborDist_ = defaultAgent_->neighborDist_;
@@ -223,7 +227,7 @@ namespace RVO {
 
         agent->id_ = cl_uint(agents_.size());
 
-        agent->allocateBuffers(svmAllocator);
+        //agent->allocateBuffers(svmAllocator);
 
         agents_.push_back(agent);
 
@@ -307,9 +311,10 @@ namespace RVO {
         return obstacleNo;
     }
 
-#define DEBUGON 0
+#define DEBUGON 1
     void RVOSimulator::doStep_NoSVM()
     {
+        std::cout << "[ INFO ] Begin step\n";
         double simStartStamp = 0, simBuildAgentTreeStamp = 0, simVelocitiesStamp = 0;
 
         kdTree_->buildAgentTree();
@@ -375,9 +380,10 @@ namespace RVO {
 
                 for(int i=0; i<agents_.size(); ++i){
                     //printf("Agent %d has %u neighbors\n", i, agents_[i]->numAgentNeighbors_);
-
+                    //std::cout << "[ INFO ] primitiveAgentNeighbor size = " << maxNeighbors*agents_.size() << "\n";
                     // is going to 0, but just in case.
                     for (int j=0; j<agents_[i]->numAgentNeighbors_; ++j){
+                        //std::cout << "[ INFO ] j = " << j << "\n";
                         primitiveAgentNeighbor[i*maxNeighbors + j].first = agents_[i]->agentNeighbors_[j].first;
                         primitiveAgentNeighbor[i*maxNeighbors + j].second = agents_[i]->agentNeighbors_[j].second->id_;
                     }
@@ -387,16 +393,34 @@ namespace RVO {
                         primitiveOrcaLines[i*numOrcaLines + j] = agents_[i]->orcaLines_[j];
                     }
                     
+                    primAgent copyAgent;
+                    copyAgent.numAgentNeighbors_ = agents_[i]->numAgentNeighbors_;
+                    copyAgent.maxNeighbors_ = agents_[i]->maxNeighbors_;
+                    copyAgent.maxSpeed_ = agents_[i]->maxSpeed_;
+                    copyAgent.neighborDist_ = agents_[i]->neighborDist_;
+                    copyAgent.newVelocity_ = {agents_[i]->newVelocity_.x(), agents_[i]->newVelocity_.y()};
+                    copyAgent.numObstacleNeighbors_ = agents_[i]->numObstacleNeighbors_;
+                    copyAgent.maxObstacleNeighbors_ = agents_[i]->maxObstacleNeighbors_;
+                    copyAgent.numOrcaLines_ = agents_[i]->numOrcaLines_;
+                    copyAgent.position_ = {agents_[i]->position_.x(), agents_[i]->position_.y()};
+                    copyAgent.prefVelocity_ = {agents_[i]->prefVelocity_.x(), agents_[i]->prefVelocity_.y()};
+                    copyAgent.radius_ = agents_[i]->radius_;
+                    copyAgent.timeHorizon_ = agents_[i]->timeHorizon_;
+                    copyAgent.timeHorizonObst_ = agents_[i]->timeHorizonObst_;
+                    copyAgent.velocity_ = {agents_[i]->velocity_.x(), agents_[i]->velocity_.y()};
+                    copyAgent.id_ = agents_[i]->id_;
+
                     primitiveAgents.push_back(*agents_[i]);
+                    primitiveAgents2.push_back(copyAgent);
                     primitiveAgentsForTree.push_back(kdTree_->agents_[i]->id_);
                     //printf("Copied agentForTree %d with pos (%f,%f)\n", i, primitiveAgentsForTree[i].position_.x(),primitiveAgentsForTree[i].position_.y());
                     //printf("Copied agent %d, id=%d with pos (%f,%f), numNeighbors=%d\n", i, agents_[i]->id_, primitiveAgents[i].position_.x(),primitiveAgents[i].position_.y(), agents_[i]->numAgentNeighbors_);
                     //agents_[i] = &primitiveAgents[i];
                 }
-
+                
                 agentsBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, newAgentsBufferSize, &primitiveAgents[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
-                std::cout << "[ INFO ] Created agentsBuffer\n";
+                std::cout << "[ INFO ] Created agentsBuffer of size " << newAgentsBufferSize << "\n";
 
                 agentsForTreeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(unsigned)*agents_.size(), &primitiveAgentsForTree[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
@@ -420,7 +444,7 @@ namespace RVO {
 
                 if(DEBUGON)
                 {
-                    std::cout << "[ INFO ] After agentsBuffer_ = clCreateBuffer with value: " << agentsBufferPtr_ << ".\n";
+                    std::cout << "[ INFO ] After agentsBuffer_ = clCreateBuffer with size: " << newAgentsBufferSize << ".\n";
                     std::cout.flush();
                 }
 
@@ -449,25 +473,27 @@ namespace RVO {
 
             // Agents themselves are not passed to kernel explicitly, instead an array of pointer to agents is passed.
             //err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 0, agentsBufferPtr_);
-            err = clSetKernelArg(kernelComputeNewVelocity_, 0, newAgentsBufferSize, &agentsBuffer);
+            std::cout << "[ INFO ] size " << newAgentsBufferSize << "\n";
+            //err = clSetKernelArg(kernelComputeNewVelocity_, 0, newAgentsBufferSize, &agentsBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &treeBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(cl_mem), &treeBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
             err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(timeStep_), &timeStep_);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(AgentNeighborBuf)*primitiveAgentNeighbor.size(), &agentNeighborBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(cl_mem), &agentNeighborBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 4 , sizeof(Line)*primitiveOrcaLines.size(), &orcaLineBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 4 , sizeof(cl_mem), &orcaLineBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 5 , sizeof(Line)*primitiveOrcaLines.size(), &projBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 5 , sizeof(cl_mem), &projBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 6 , sizeof(unsigned)*agents_.size(), &agentsForTreeBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 6 , sizeof(cl_mem), &agentsForTreeBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
             size_t global_size = agents_.size();
@@ -494,7 +520,7 @@ namespace RVO {
             }
 
             //err = clSetKernelArgSVMPointer(kernelUpdate_, 0, agentsBufferPtr_);
-            err = clSetKernelArg(kernelUpdate_, 0, sizeof(Agent)*newAgentsBufferSize, &agentsBuffer);
+            err = clSetKernelArg(kernelUpdate_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
             err = clSetKernelArg(kernelUpdate_, 1, sizeof(timeStep_), &timeStep_);
             SAMPLE_CHECK_ERRORS(err);

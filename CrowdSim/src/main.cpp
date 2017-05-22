@@ -18,6 +18,8 @@
 // Intel Corporation is the author of the Materials, and requests that all
 // problem reports or change requests be submitted to it directly
 
+// for graphics
+#include "bitmap_image.hpp"
 
 #include <stdio.h>
 
@@ -516,7 +518,7 @@ int main (int argc, const char** argv)
             while(cmdparser.iterations.getValue() == 0 || iteration < int(cmdparser.iterations.getValue()))
             {
                 // Do one step of simulations
-                if(!sim->StepNoGraphics(&kernelTime))
+                if(!sim->StepNoGraphics(&kernelTime, iteration))
                 {
                     // if we've done (agents arrived to their final positions), then stop
                     break;

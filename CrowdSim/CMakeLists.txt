@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8)
 project(CrowdSim)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated-declarations")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wno-deprecated-declarations -L/home/alex/intelFPGA/17.0/hld/board/s5_ref/linux64/lib -L/home/alex/intelFPGA/17.0/hld/host/linux64/lib -Wl,--no-as-needed -lalteracl -laltera_s5_ref_mmd -lelf")
 
 set(RVO2_FILE_DIR RVO2/src)
 set(COMMON_FILE_DIR ../common)

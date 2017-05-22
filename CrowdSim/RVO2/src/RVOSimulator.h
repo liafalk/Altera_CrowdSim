@@ -119,6 +119,25 @@ namespace RVO {
         }
     };
 
+#pragma pack(4)
+    typedef struct __primAgent {
+        cl_uint numAgentNeighbors_;
+        cl_uint maxNeighbors_;
+        cl_float maxSpeed_;
+        cl_float neighborDist_;
+        cl_float2 newVelocity_;
+        cl_uint numObstacleNeighbors_; // number of filled elements in agentNeighbors
+        cl_uint maxObstacleNeighbors_;  // number of allocated positions in obstacleNeighbors, can be increased dynamically
+        cl_uint numOrcaLines_;
+        cl_float2 position_;
+        cl_float2 prefVelocity_;
+        cl_float radius_;
+        cl_float timeHorizon_;
+        cl_float timeHorizonObst_;
+        cl_float2 velocity_;
+        cl_uint id_;
+    } primAgent;
+
     struct Agent;
     struct AgentNeighbor;
     class KdTree;
@@ -636,6 +655,7 @@ namespace RVO {
     private:
         std::vector<Agent *> agents_;
         std::vector<Agent> primitiveAgents;
+        std::vector<primAgent> primitiveAgents2;
         std::vector<unsigned> primitiveAgentsForTree;
         std::vector<AgentNeighborBuf> primitiveAgentNeighbor;
         std::vector<Line> primitiveOrcaLines;
