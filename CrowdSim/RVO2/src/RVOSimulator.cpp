@@ -393,6 +393,7 @@ namespace RVO {
                         primitiveOrcaLines[i*numOrcaLines + j] = agents_[i]->orcaLines_[j];
                     }
                     
+                    /*
                     primAgent copyAgent;
                     copyAgent.numAgentNeighbors_ = agents_[i]->numAgentNeighbors_;
                     copyAgent.maxNeighbors_ = agents_[i]->maxNeighbors_;
@@ -410,8 +411,9 @@ namespace RVO {
                     copyAgent.velocity_ = {agents_[i]->velocity_.x(), agents_[i]->velocity_.y()};
                     copyAgent.id_ = agents_[i]->id_;
 
+                    primitiveAgents2.push_back(copyAgent); */
+
                     primitiveAgents.push_back(*agents_[i]);
-                    primitiveAgents2.push_back(copyAgent);
                     primitiveAgentsForTree.push_back(kdTree_->agents_[i]->id_);
                     //printf("Copied agentForTree %d with pos (%f,%f)\n", i, primitiveAgentsForTree[i].position_.x(),primitiveAgentsForTree[i].position_.y());
                     //printf("Copied agent %d, id=%d with pos (%f,%f), numNeighbors=%d\n", i, agents_[i]->id_, primitiveAgents[i].position_.x(),primitiveAgents[i].position_.y(), agents_[i]->numAgentNeighbors_);
@@ -441,6 +443,10 @@ namespace RVO {
                 projBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, sizeof(Line)*primitiveOrcaLines.size(), NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created projBuffer\n";
+
+                stackBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, sizeof(StackNode)*agents_.size(), NULL, &err);
+                SAMPLE_CHECK_ERRORS(err);
+                std::cout << "[ INFO ] Created stackBuffer\n";
 
                 if(DEBUGON)
                 {
@@ -494,6 +500,9 @@ namespace RVO {
             SAMPLE_CHECK_ERRORS(err);
 
             err = clSetKernelArg(kernelComputeNewVelocity_, 6 , sizeof(cl_mem), &agentsForTreeBuffer);
+            SAMPLE_CHECK_ERRORS(err);
+
+            err = clSetKernelArg(kernelComputeNewVelocity_, 7 , sizeof(cl_mem), &stackBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
             size_t global_size = agents_.size();

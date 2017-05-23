@@ -119,6 +119,14 @@ namespace RVO {
         }
     };
 
+    typedef struct __StackNode
+    {
+        uint retCode;
+        float distSqLeft;
+        float distSqRight;
+        uint node;
+    } StackNode;
+
 #pragma pack(4)
     typedef struct __primAgent {
         cl_uint numAgentNeighbors_;
