@@ -239,7 +239,7 @@ typedef struct __StackNode
     uint node;
 } StackNode;
 
-__global StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float distSqRight, uint node)
+__global StackNode* push (__global StackNode* stackNode, uint retCode, float distSqLeft, float distSqRight, uint node)
 {
     stackNode->retCode = retCode;
     stackNode->distSqLeft = distSqLeft;
@@ -251,7 +251,7 @@ __global StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, 
 void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
     //StackNode stack[MAX_KDTREE_DEPTH];
-    __global StackNode* stackTop = &stack[get_global_id()];
+    __global StackNode* stackTop = &stack[get_global_id(0)];
     //StackNode* stackTop = &stack[0];
     uint retCode = 0;
 
@@ -516,7 +516,7 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
 
 __kernel
-void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines, __global unsigned* restrict agentsForTree, __global StackNode* stack)
+void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines, __global unsigned* restrict agentsForTree, __global StackNode* restrict stack)
 {
     #if 1
     __global Agent* agent = &agents[get_global_id(0)];
