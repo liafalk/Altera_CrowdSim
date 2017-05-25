@@ -693,6 +693,7 @@ namespace RVO {
         cl_mem orcaLineBuffer;
         cl_mem projBuffer;
         cl_mem agentsForTreeBuffer;
+        cl_mem stackBuffer;
         
         friend struct Agent;
         //friend struct AgentNeighbor;

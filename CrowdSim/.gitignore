@@ -4,6 +4,10 @@ Makefile
 *.sln
 *.cmake
 *.a
+*.bmp
+
+*.aocx
+*.aoco
 
 .idea/
 cmake-build-debug/

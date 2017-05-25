@@ -227,7 +227,7 @@ namespace RVO {
 
         agent->id_ = cl_uint(agents_.size());
 
-        //agent->allocateBuffers(svmAllocator);
+        agent->allocateBuffers(svmAllocator);
 
         agents_.push_back(agent);
 
@@ -312,6 +312,7 @@ namespace RVO {
     }
 
 #define DEBUGON 1
+#define FORCE_C_NEIGHBORS_KERNEL
     void RVOSimulator::doStep_NoSVM()
     {
         std::cout << "[ INFO ] Begin step\n";
@@ -323,20 +324,23 @@ namespace RVO {
         // If OpenCL is enabled, do the simulation via OpenCL kernel
         if(oclobjects_ && cmdparser_ && !cmdparser_->no_opencl.getValue())
         {
-            #ifdef INTEL_NOT_FOR_RELEASE
 
-            if(cmdparser_->force_c_neighbors_kernel.getValue())
-            {
-                #ifdef _OPENMP
-                #pragma omp parallel for
-                #endif
-                for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
-                    agents_[i]->computeNeighbors();
+            cl_uint maxNeighbors = defaultAgent_->maxNeighbors_;
+
+            if (primitiveAgentNeighbor.size() < maxNeighbors*agents_.size())
+                primitiveAgentNeighbor.resize(maxNeighbors*agents_.size());
+
+            #ifdef FORCE_C_NEIGHBORS_KERNEL
+            for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
+                agents_[i]->computeNeighbors();
+                //printf("[ INFO ] Agent %d has %d neighbours.\n", i, agents_[i]->numAgentNeighbors_);
+                for (int j=0; j<agents_[i]->numAgentNeighbors_; ++j){
+                    primitiveAgentNeighbor[i*maxNeighbors + j].first = agents_[i]->agentNeighbors_[j].first;
+                    primitiveAgentNeighbor[i*maxNeighbors + j].second = agents_[i]->agentNeighbors_[j].second->id_;
                 }
             }
-
             #endif
-
+            std::cout << "primitiveAgentNeighbor size = " << primitiveAgentNeighbor.size() << "\n";
             size_t newAgentsBufferSize = agents_.size() * sizeof(Agent);
             cl_int err = CL_SUCCESS;
             
@@ -345,15 +349,6 @@ namespace RVO {
                 // As the library doesn't have ability to delete agents, we need to update OpenCL buffer only when
                 // the number of agents in simulation is increased. And as buffer contains pointer to agents, this synchronization
                 // goes unidirectionally from std::vector to OpenCL buffer.
-
-                if(0 && agentsBufferSize_ > 0)
-                {
-                    // If it is not the first time when allocation is performed,
-                    // deallocate previously allocated buffer.
-                    svmAllocator->unregisterSVMPointer(agentsBufferPtr_);
-                    clSVMFree(oclobjects_->context, agentsBufferPtr_);
-                    SAMPLE_CHECK_ERRORS(err);
-                }
 
                 if(DEBUGON)
                 {
@@ -372,23 +367,14 @@ namespace RVO {
                 primitiveAgents.clear();
                 primitiveAgentsForTree.clear();
                 // defaultAgent contains the default maximum parameters used for all agents (hopefully)
-                cl_uint maxNeighbors = defaultAgent_->maxNeighbors_;
+                
                 size_t numOrcaLines = defaultAgent_->maxObstacleNeighbors_ + maxNeighbors;
-
-                primitiveAgentNeighbor.resize(maxNeighbors*agents_.size());
+                std::cout << "[ INFO ] resize to " << numOrcaLines*agents_.size() << "\n";
                 primitiveOrcaLines.resize(numOrcaLines*agents_.size());
 
                 for(int i=0; i<agents_.size(); ++i){
-                    //printf("Agent %d has %u neighbors\n", i, agents_[i]->numAgentNeighbors_);
-                    //std::cout << "[ INFO ] primitiveAgentNeighbor size = " << maxNeighbors*agents_.size() << "\n";
-                    // is going to 0, but just in case.
-                    for (int j=0; j<agents_[i]->numAgentNeighbors_; ++j){
-                        //std::cout << "[ INFO ] j = " << j << "\n";
-                        primitiveAgentNeighbor[i*maxNeighbors + j].first = agents_[i]->agentNeighbors_[j].first;
-                        primitiveAgentNeighbor[i*maxNeighbors + j].second = agents_[i]->agentNeighbors_[j].second->id_;
-                    }
-
                     // will be 0, but just in case
+                    
                     for (int j=0; j<agents_[i]->numOrcaLines_; ++j){
                         primitiveOrcaLines[i*numOrcaLines + j] = agents_[i]->orcaLines_[j];
                     }
@@ -427,7 +413,7 @@ namespace RVO {
                 agentsForTreeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(unsigned)*agents_.size(), &primitiveAgentsForTree[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentsForTreeBuffer\n";
-
+                
                 agentNeighborBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(AgentNeighborBuf)*primitiveAgentNeighbor.size(), &primitiveAgentNeighbor[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentNeighborBuffer\n";
@@ -457,7 +443,7 @@ namespace RVO {
                 // Save the new buffer size value
                 agentsBufferSize_ = newAgentsBufferSize;
             }
-            else{ // if not, we need to update the kdTree.
+            else{ // if not, we need to update the kdTree and neighbours!
                 std::cout << "[ INFO ] Updated treeBuffer\n";
                 std::cout << kdTree_->agentTree_[1].minX << std::endl;
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, treeBuffer, CL_TRUE, 0, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], 0, NULL, NULL);
@@ -474,6 +460,9 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
 
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsForTreeBuffer, CL_TRUE, 0, sizeof(unsigned)*agents_.size(), &primitiveAgentsForTree[0], 0, NULL, NULL);
+                SAMPLE_CHECK_ERRORS(err);          
+
+                err =  clEnqueueWriteBuffer(oclobjects_->queue, agentNeighborBuffer, CL_TRUE, 0, sizeof(AgentNeighborBuf)*primitiveAgentNeighbor.size(), &primitiveAgentNeighbor[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);           
             }
 

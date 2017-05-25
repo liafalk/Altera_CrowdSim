@@ -379,6 +379,98 @@ namespace RVO {
         }
     }
 
+/*
+StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float distSqRight, uint node)
+{
+    stackNode->retCode = retCode;
+    stackNode->distSqLeft = distSqLeft;
+    stackNode->distSqRight = distSqRight;
+    stackNode->node = node;
+    return stackNode + 1;
+}
+
+void KdTree::queryAgentTreeRecursive(Agent *agent, float &rangeSq, size_t node) const
+//(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree)
+{
+    StackNode stack[20];
+    StackNode* stackTop = &stack[0];
+    uint retCode = 0;
+
+    float distSqLeft;
+    float distSqRight;
+
+    for(;;)
+    {
+        switch(retCode)
+        {
+            case 0:
+                if (agentTree_[node].end - agentTree_[node].begin <= RVO_MAX_LEAF_SIZE) {                    
+                    for (uint i = agentTree_[node].begin; i < agentTree_[node].end; ++i) {
+                        //printf("[ INFO ] Insert neighbor %i to agent %d\n", i, agent->id_);
+                        agent->insertAgentNeighbor(agents_[i], rangeSq);
+                    }
+                    break;
+                }
+                else {
+                    distSqLeft =
+                        sqr(std::max(0.0f, agentTree_[agentTree_[node].left].minX - agent->position_.x())) +
+                        sqr(std::max(0.0f, agent->position_.x() - agentTree_[agentTree_[node].left].maxX)) +
+                        sqr(std::max(0.0f, agentTree_[agentTree_[node].left].minY - agent->position_.y())) +
+                        sqr(std::max(0.0f, agent->position_.y() - agentTree_[agentTree_[node].left].maxY));
+
+                    distSqRight =
+                        sqr(std::max(0.0f, agentTree_[agentTree_[node].right].minX - agent->position_.x())) +
+                        sqr(std::max(0.0f, agent->position_.x() - agentTree_[agentTree_[node].right].maxX)) +
+                        sqr(std::max(0.0f, agentTree_[agentTree_[node].right].minY - agent->position_.y())) +
+                        sqr(std::max(0.0f, agent->position_.y() - agentTree_[agentTree_[node].right].maxY));
+                    
+					if (distSqLeft < distSqRight) {
+                        if (distSqLeft < rangeSq) {
+                            //queryAgentTreeRecursive(agents_, agent, agentTree_, rangeSq, agentTree_[node].left);    // RECURSION
+                            stackTop = push(stackTop, 1, distSqLeft, distSqRight, node); node = agentTree_[node].left; retCode = 0;
+                            continue;
+
+            case 1:
+
+                            if (distSqRight < rangeSq) {
+                                //queryAgentTreeRecursive(agents_, agent, agentTree_, rangeSq, agentTree_[node].right);    // RECURSION
+                                stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); node = agentTree_[node].right; retCode = 0;
+                                continue;
+                            }
+                        }
+                    }
+                    else {
+                        if (distSqRight < rangeSq) {
+                            //queryAgentTreeRecursive(agents_, agent, agentTree_, rangeSq, agentTree_[node].right);    // RECURSION
+                            stackTop = push(stackTop, 2, distSqLeft, distSqRight, node); node = agentTree_[node].right; retCode = 0;
+                            continue;
+            case 2:
+
+                            if (distSqLeft < rangeSq) {
+                                //queryAgentTreeRecursive(agents_, agent, agentTree_, rangeSq, agentTree_[node].left);    // RECURSION
+                                stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); node = agentTree_[node].left; retCode = 0;
+                                continue;
+                            }
+                        }
+                    }
+                }
+            case 3: break;
+        }
+
+        if(&stack[0] == stackTop)
+        {
+            break;
+        }
+
+        stackTop--;
+
+        retCode = stackTop->retCode;
+        distSqLeft = stackTop->distSqLeft;
+        distSqRight = stackTop->distSqRight;
+        node = stackTop->node;
+    }
+}
+*/
     void KdTree::queryObstacleTreeRecursive(Agent *agent, float rangeSq, const ObstacleTreeNode *node) const
     {
         if (node == NULL) {

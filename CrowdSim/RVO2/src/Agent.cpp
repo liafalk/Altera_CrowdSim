@@ -76,7 +76,7 @@ namespace RVO {
     {
         numObstacleNeighbors_ = 0;
         float rangeSq = sqr(timeHorizonObst_ * maxSpeed_ + radius_);
-        sim_->kdTree_->computeObstacleNeighbors(this, rangeSq);
+        //sim_->kdTree_->computeObstacleNeighbors(this, rangeSq);
 
         numAgentNeighbors_ = 0;
 
@@ -395,7 +395,7 @@ namespace RVO {
     {
         if (this != agent) {
             const float distSq = absSq(position_ - agent->position_);
-
+                
             if (distSq < rangeSq) {
                 if (numAgentNeighbors_ < maxNeighbors_) {
                     agentNeighbors_[numAgentNeighbors_++] = std::make_pair(distSq, agent);
@@ -451,24 +451,10 @@ namespace RVO {
 
         size_t numOrcaLines = maxObstacleNeighbors_ + maxNeighbors_;
 
-        if(svmAllocator)
-        {
-            agentNeighbors_ = new (svmAllocator->allocate(sizeof(AgentNeighbor)*maxNeighbors_)) AgentNeighbor[maxNeighbors_];
-
-            cl_int err = CL_SUCCESS;
-
-            obstacleNeighbors_ = new (svmAllocator->allocate(sizeof(ObstacleNeighbor)*maxObstacleNeighbors_)) ObstacleNeighbor[maxObstacleNeighbors_];
-            orcaLines_ = new (svmAllocator->allocate(sizeof(Line)*numOrcaLines)) Line[numOrcaLines];
-            projLines_ = new (svmAllocator->allocate(sizeof(Line)*numOrcaLines)) Line[numOrcaLines];
-
-        }
-        else
-        {
-            agentNeighbors_ = new AgentNeighbor[maxNeighbors_];
-            obstacleNeighbors_ = new ObstacleNeighbor[maxObstacleNeighbors_];
-            orcaLines_ = new Line[numOrcaLines];
-            projLines_ = new Line[numOrcaLines];
-        }
+        agentNeighbors_ = new AgentNeighbor[maxNeighbors_];
+        //obstacleNeighbors_ = new ObstacleNeighbor[maxObstacleNeighbors_];
+        orcaLines_ = new Line[numOrcaLines];
+        projLines_ = new Line[numOrcaLines];
     }
 
     bool linearProgram1(const Line* lines, size_t lineNo, float radius, const Vector2 &optVelocity, bool directionOpt, Vector2 &result)

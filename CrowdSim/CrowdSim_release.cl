@@ -524,7 +524,7 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
     
     #ifndef FORCE_C_NEIGHBORS_KERNEL
 
-    computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree, stack);
+    //computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree, stack);
 
     #endif
 

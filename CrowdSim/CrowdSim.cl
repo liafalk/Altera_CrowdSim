@@ -529,7 +529,7 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
 
     #ifndef FORCE_C_NEIGHBORS_KERNEL
 
-    computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree);
+    //computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree);
 
     #endif
 
