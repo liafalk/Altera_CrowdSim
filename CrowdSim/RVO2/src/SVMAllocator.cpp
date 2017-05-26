@@ -27,6 +27,7 @@
 #include <cassert>
 #include "basic.hpp"
 
+/*
 #include "SVMAllocator.h"
 
 SVMAllocator::SVMAllocator (cl_context context, size_t pageSize) :
@@ -133,3 +134,4 @@ void SVMAllocator::setKernelSVMPointers(cl_kernel kernel)
         &allPtrs[0]
     );
 }
+*/

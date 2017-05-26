@@ -65,13 +65,15 @@ namespace RVO {
 
     KdTree::~KdTree()
     {
-        if(!sim_->cmdparser_->no_opencl.getValue())
+        if(0 && !sim_->cmdparser_->no_opencl.getValue())
         {
+            /*
             sim_->svmAllocator->unregisterSVMPointer(agents_);
             clSVMFree(sim_->oclobjects_->context, agents_);
 
             sim_->svmAllocator->unregisterSVMPointer(agentTree_);
             clSVMFree(sim_->oclobjects_->context, agentTree_);
+            */
         }
         else
         {
@@ -91,7 +93,7 @@ namespace RVO {
             // If OpenCL simulation is enabled, allocate regions
             // as shared virtual memory buffers
             if(0 && !sim_->cmdparser_->no_opencl.getValue())
-            {
+            {/*
                 sim_->svmAllocator->unregisterSVMPointer(agents_);
                 clSVMFree(sim_->oclobjects_->context, agents_);
 
@@ -113,6 +115,7 @@ namespace RVO {
                 ) AgentTreeNode[numAgentTreeNodes];
 
                 sim_->svmAllocator->registerSVMPointer(agentTree_);
+                */
             }
             else
             {

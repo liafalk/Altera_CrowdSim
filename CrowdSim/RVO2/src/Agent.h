@@ -157,7 +157,7 @@ namespace RVO {
          *             dynamic allocations inside the kernel which is not an easy task
          *             even with using OpenCL 2.0.
          */
-        void allocateBuffers (SVMAllocator* svmallocator);
+        void allocateBuffers ();
 
         AgentNeighbor* agentNeighbors_;
         cl_uint numAgentNeighbors_; // number of filled elements in agentNeighbors

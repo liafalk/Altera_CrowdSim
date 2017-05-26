@@ -445,7 +445,7 @@ namespace RVO {
         position_ += velocity_ * sim_->timeStep_;
     }
 
-    void Agent::allocateBuffers (SVMAllocator* svmAllocator)
+    void Agent::allocateBuffers ()
     {
         // Preallocate arrays for neighbors and orcaLines based on set max-parameters
 

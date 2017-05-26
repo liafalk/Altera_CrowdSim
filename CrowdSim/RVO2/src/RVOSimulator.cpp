@@ -72,7 +72,7 @@ namespace RVO {
         globalTime_(0.0f),
         kdTree_(NULL),
         timeStep_(0.0f),
-        svmAllocator(0),
+        //svmAllocator(0),
         oclobjects_(oclobjects),
         cmdparser_(cmdparser),
         openCLProgram_(0),
@@ -81,7 +81,7 @@ namespace RVO {
     {
         if(oclobjects_ && cmdparser_)
         {
-            svmAllocator = new SVMAllocator(oclobjects_->context);
+            //svmAllocator = new SVMAllocator(oclobjects_->context);
 
             string exeDir = exe_dir();
 
@@ -139,7 +139,7 @@ namespace RVO {
         globalTime_(0.0f),
         kdTree_(NULL),
         timeStep_(timeStep),
-        svmAllocator(0),
+        //svmAllocator(0),
         oclobjects_(0),
         cmdparser_(0),
         openCLProgram_(0),
@@ -173,7 +173,7 @@ namespace RVO {
                 obstacles_[i]->~Obstacle();
             }
 
-            delete svmAllocator;
+            //delete svmAllocator;
         }
         else
         {
@@ -189,11 +189,13 @@ namespace RVO {
         delete kdTree_;
         delete openCLProgram_;
 
+        /*
         if(agentsBufferSize_ > 0)
         {
             svmAllocator->unregisterSVMPointer(agentsBufferPtr_);
             clSVMFree(oclobjects_->context, agentsBufferPtr_);
         }
+        */
     }
 
     size_t RVOSimulator::addAgent(const Vector2 &position)
@@ -206,7 +208,7 @@ namespace RVO {
 
         if(0 && !cmdparser_->no_opencl.getValue())
         {
-            agent =  new (svmAllocator->allocate(sizeof(Agent))) Agent(this);
+            //agent =  new (svmAllocator->allocate(sizeof(Agent))) Agent(this);
         }
         else
         {
@@ -227,7 +229,7 @@ namespace RVO {
 
         agent->id_ = cl_uint(agents_.size());
 
-        agent->allocateBuffers(svmAllocator);
+        agent->allocateBuffers();
 
         agents_.push_back(agent);
 
@@ -240,7 +242,7 @@ namespace RVO {
 
         if( 0 && !cmdparser_->no_opencl.getValue())
         {
-            agent = new (svmAllocator->allocate(sizeof(Agent))) Agent(this);
+            //agent = new (svmAllocator->allocate(sizeof(Agent))) Agent(this);
         }
         else
         {
@@ -258,7 +260,7 @@ namespace RVO {
 
         agent->id_ = cl_uint(agents_.size());
 
-        agent->allocateBuffers(svmAllocator);
+        agent->allocateBuffers();
 
         agents_.push_back(agent);
 
@@ -627,6 +629,7 @@ namespace RVO {
         globalTime_ += timeStep_;
     }
 
+/*
     void RVOSimulator::doStep()
     {
         double simStartStamp = 0, simBuildAgentTreeStamp = 0, simVelocitiesStamp = 0;
@@ -913,7 +916,7 @@ namespace RVO {
 
         globalTime_ += timeStep_;
     }
-
+*/
     size_t RVOSimulator::getAgentAgentNeighbor(size_t agentNo, size_t neighborNo) const
     {
         return agents_[agentNo]->agentNeighbors_[neighborNo].second->id_;

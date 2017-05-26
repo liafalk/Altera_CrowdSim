@@ -137,6 +137,7 @@ bool SimulateCL::reachedGoal(RVOSimulator* sim)
     return true;
 }
 
+/*
 void checkSVMAvailability (cl_device_id device, cl_device_svm_capabilities requiredType, const std::string& deviceName, const std::string& requiredTypeDesc = "")
 {
     cl_device_svm_capabilities caps;
@@ -154,7 +155,7 @@ void checkSVMAvailability (cl_device_id device, cl_device_svm_capabilities requi
         throw Error("OpenCL device " + deviceName + " doesn't support required SVM type " + (requiredTypeDesc.empty() ? "" : "(" + requiredTypeDesc + ")") + ".");
     }
 }
-
+*/
 // Initialize system, booting up CL
 void SimulateCL::Init (
     const string& platform_name_or_index,
@@ -199,12 +200,13 @@ void SimulateCL::Init (
         case CL_DEVICE_TYPE_CPU: cout << "CPU"; break;
         case CL_DEVICE_TYPE_GPU: cout << "GPU"; break;
         case CL_DEVICE_TYPE_ACCELERATOR: cout << "ACCELERATOR"; break;
-        case CL_DEVICE_TYPE_CUSTOM: cout << "CUSTOM"; break;
+        //case CL_DEVICE_TYPE_CUSTOM: cout << "CUSTOM"; break;
         default: throw Error("Unrecornized device type returned from clGetDeviceInfo");
     }
     cout << "\n";
 
  
+ /*
     // we are using OpenCL 2.0 so can check for support of fine-grained SVM
     cl_device_svm_capabilities requiredSVM = CL_DEVICE_SVM_FINE_GRAIN_BUFFER;
 
@@ -218,7 +220,7 @@ void SimulateCL::Init (
 
     printf("[ INFO ] The device supports required SVM capabilities: fine grain buffer.\n");
     cout.flush();
-    
+   */ 
     crowd_sim_done = false;
 
     ShareBuffers(in_numPoints, in_points);
@@ -257,8 +259,8 @@ void SimulateCL::Init (
         else
         {
             // No OpenGL/OpenCL sharing -- copy m_agents to GL buffer directly
-            glBindBuffer(GL_ARRAY_BUFFER, in_points);
-            glBufferData(GL_ARRAY_BUFFER, crowd_sim->getNumAgents() * sizeof(cl_float4), m_agents, GL_DYNAMIC_DRAW);
+            //glBindBuffer(GL_ARRAY_BUFFER, in_points);
+            //glBufferData(GL_ARRAY_BUFFER, crowd_sim->getNumAgents() * sizeof(cl_float4), m_agents, GL_DYNAMIC_DRAW);
         }
     }
 
@@ -329,8 +331,8 @@ void SimulateCL::Step(float in_deltaT)
             else
             {
                 // No OpenGL/OpenCL sharing -- copy m_agents to GL buffer directly
-                glBindBuffer(GL_ARRAY_BUFFER, in_points);
-                glBufferData(GL_ARRAY_BUFFER, crowd_sim->getNumAgents() * sizeof(cl_float4), m_agents, GL_DYNAMIC_DRAW);
+                //glBindBuffer(GL_ARRAY_BUFFER, in_points);
+                //glBufferData(GL_ARRAY_BUFFER, crowd_sim->getNumAgents() * sizeof(cl_float4), m_agents, GL_DYNAMIC_DRAW);
             }
         }
 
