@@ -22,8 +22,6 @@
 #include <stdio.h>
 #include <cstdio>
 #include <iostream>
-#include <GL/glew.h>
-#include <GL/gl.h>
 #include "SimulateCL.h"
 #include <time.h>
 #include "../RVO2/src/RVO.h"
