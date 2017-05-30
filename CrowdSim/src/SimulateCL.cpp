@@ -92,7 +92,6 @@ void SimulateCL::setupScenario4(RVOSimulator* sim)
             if(--rest_num_agents == 0)break;
         }
     }
-    sim->allocateMemAlignedBuffers();
 }
 
 
@@ -241,6 +240,10 @@ void SimulateCL::Init (
     setupScenario4(crowd_sim);
 
     printf("[ INFO ] Finish scenario setup.\n");
+
+    printf("[ INFO ] Initializing memory aligned buffers.\n");
+    crowd_sim->allocateMemAlignedBuffers();
+
     if(!cmdparser->no_graphics.getValue())
     {
         if(!cmdparser->no_gl_sharing.getValue())
