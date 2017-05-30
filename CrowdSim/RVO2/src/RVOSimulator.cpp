@@ -313,7 +313,17 @@ namespace RVO {
         return obstacleNo;
     }
 
-#define DEBUGON 1
+    void RVOSimulator::allocateMemAlignedBuffers()
+    {
+        unsigned maxNeighbors = defaultAgent_->maxNeighbors_;
+        unsigned numAgents = static_cast<unsigned>(agents_size());
+        assert(!posix_memalign((void**)primitiveAgents,         64, numAgents*sizeof(Agent)));
+        assert(!posix_memalign((void**)primitiveAgentsForTree,  64, numAgents*sizeof(unsigned)));
+        assert(!posix_memalign((void**)primitiveAgentNeighbor,  64, maxNeighbors*agents_.size()*sizeof(AgentNeighborBuf)));
+        assert(!posix_memalign((void**)primitiveOrcaLines,      64, (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(Line)));
+    }
+
+#define DEBUGON 0
 #define FORCE_C_NEIGHBORS_KERNEL
     void RVOSimulator::doStep_NoSVM()
     {
@@ -328,10 +338,10 @@ namespace RVO {
         {
 
             cl_uint maxNeighbors = defaultAgent_->maxNeighbors_;
-
+/*
             if (primitiveAgentNeighbor.size() < maxNeighbors*agents_.size())
                 primitiveAgentNeighbor.resize(maxNeighbors*agents_.size());
-
+*/
             #ifdef FORCE_C_NEIGHBORS_KERNEL
             for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
                 agents_[i]->computeNeighbors();
@@ -342,7 +352,7 @@ namespace RVO {
                 }
             }
             #endif
-            std::cout << "primitiveAgentNeighbor size = " << primitiveAgentNeighbor.size() << "\n";
+            //std::cout << "primitiveAgentNeighbor size = " << primitiveAgentNeighbor.size() << "\n";
             size_t newAgentsBufferSize = agents_.size() * sizeof(Agent);
             cl_int err = CL_SUCCESS;
             
@@ -366,13 +376,13 @@ namespace RVO {
 
                 //std::copy(agents_.begin(), agents_.end(), (Agent**)agentsBufferPtr_);
                 
-                primitiveAgents.clear();
-                primitiveAgentsForTree.clear();
+                //primitiveAgents.clear();
+                //primitiveAgentsForTree.clear();
                 // defaultAgent contains the default maximum parameters used for all agents (hopefully)
                 
                 size_t numOrcaLines = defaultAgent_->maxObstacleNeighbors_ + maxNeighbors;
                 std::cout << "[ INFO ] resize to " << numOrcaLines*agents_.size() << "\n";
-                primitiveOrcaLines.resize(numOrcaLines*agents_.size());
+                //primitiveOrcaLines.resize(numOrcaLines*agents_.size());
 
                 for(int i=0; i<agents_.size(); ++i){
                     // will be 0, but just in case
@@ -401,11 +411,15 @@ namespace RVO {
 
                     primitiveAgents2.push_back(copyAgent); */
 
-                    primitiveAgents.push_back(*agents_[i]);
-                    primitiveAgentsForTree.push_back(kdTree_->agents_[i]->id_);
+                    //primitiveAgents.push_back(*agents_[i]);
+                    //primitiveAgentsForTree.push_back(kdTree_->agents_[i]->id_);
                     //printf("Copied agentForTree %d with pos (%f,%f)\n", i, primitiveAgentsForTree[i].position_.x(),primitiveAgentsForTree[i].position_.y());
                     //printf("Copied agent %d, id=%d with pos (%f,%f), numNeighbors=%d\n", i, agents_[i]->id_, primitiveAgents[i].position_.x(),primitiveAgents[i].position_.y(), agents_[i]->numAgentNeighbors_);
                     //agents_[i] = &primitiveAgents[i];
+
+                    // implementation with malloc (already sized array)
+                    primitiveAgents[i] = *agents_[i];
+                    primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
                 }
                 
                 agentsBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, newAgentsBufferSize, &primitiveAgents[0], &err);

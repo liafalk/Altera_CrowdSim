@@ -660,13 +660,22 @@ namespace RVO {
          */
         void setTimeStep(float timeStep);
         
+        // creates the memaligned buffers
+        void allocateMemAlignedBuffers();
+
     private:
         std::vector<Agent *> agents_;
-        std::vector<Agent> primitiveAgents;
-        std::vector<primAgent> primitiveAgents2;
-        std::vector<unsigned> primitiveAgentsForTree;
-        std::vector<AgentNeighborBuf> primitiveAgentNeighbor;
-        std::vector<Line> primitiveOrcaLines;
+        
+        //std::vector<Agent> primitiveAgents;
+        //std::vector<primAgent> primitiveAgents2;
+        //std::vector<unsigned> primitiveAgentsForTree;
+        //std::vector<AgentNeighborBuf> primitiveAgentNeighbor;
+        //std::vector<Line> primitiveOrcaLines;
+
+        Agent* primitiveAgents;
+        unsigned* primitiveAgentsForTree;
+        AgentNeighborBuf* primitiveAgentNeighbor;
+        Line* primitiveOrcaLines;
 
         Agent *defaultAgent_;
         float globalTime_;

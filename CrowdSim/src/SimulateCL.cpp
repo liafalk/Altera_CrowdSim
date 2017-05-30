@@ -92,6 +92,7 @@ void SimulateCL::setupScenario4(RVOSimulator* sim)
             if(--rest_num_agents == 0)break;
         }
     }
+    sim->allocateMemAlignedBuffers();
 }
 
 
@@ -238,6 +239,7 @@ void SimulateCL::Init (
     cout.flush();
 
     setupScenario4(crowd_sim);
+
     printf("[ INFO ] Finish scenario setup.\n");
     if(!cmdparser->no_graphics.getValue())
     {
@@ -384,8 +386,7 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
     crowd_sim->doStep_NoSVM();
 
 #define TESTID 0
-    printf("Agent 0's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", 
-        crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
+    //printf("Agent 0's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
 
     cartesian_canvas canvas(399,399);
     canvas.image().clear(255);
