@@ -322,10 +322,10 @@ namespace RVO {
         err |= posix_memalign((void**)primitiveAgents,         64, numAgents*sizeof(Agent));
         err |= posix_memalign((void**)primitiveAgentsForTree,  64, numAgents*sizeof(unsigned));
 
-        primitiveAgentNeighbor_size = maxNeighbors*agents_.size()*sizeof(AgentNeighborBuf));
+        primitiveAgentNeighbor_size = maxNeighbors*agents_.size()*sizeof(AgentNeighborBuf);
         err |= posix_memalign((void**)primitiveAgentNeighbor, 64, primitiveAgentNeighbor_size);
 
-        primitiveOrcaLines_size = (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(Line));
+        primitiveOrcaLines_size = (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(Line);
         err |= posix_memalign((void**)primitiveOrcaLines, 64, primitiveOrcaLines_size);
 
         if (err){
