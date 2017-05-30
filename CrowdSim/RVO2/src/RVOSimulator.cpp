@@ -316,11 +316,21 @@ namespace RVO {
     void RVOSimulator::allocateMemAlignedBuffers()
     {
         unsigned maxNeighbors = defaultAgent_->maxNeighbors_;
-        unsigned numAgents = static_cast<unsigned>(agents_size());
-        assert(!posix_memalign((void**)primitiveAgents,         64, numAgents*sizeof(Agent)));
-        assert(!posix_memalign((void**)primitiveAgentsForTree,  64, numAgents*sizeof(unsigned)));
-        assert(!posix_memalign((void**)primitiveAgentNeighbor,  64, maxNeighbors*agents_.size()*sizeof(AgentNeighborBuf)));
-        assert(!posix_memalign((void**)primitiveOrcaLines,      64, (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(Line)));
+        unsigned numAgents = static_cast<unsigned>(agents_.size());
+        unsigned err;
+
+        err |= posix_memalign((void**)primitiveAgents,         64, numAgents*sizeof(Agent));
+        err |= posix_memalign((void**)primitiveAgentsForTree,  64, numAgents*sizeof(unsigned));
+
+        primitiveAgentNeighbor_size = maxNeighbors*agents_.size()*sizeof(AgentNeighborBuf));
+        err |= posix_memalign((void**)primitiveAgentNeighbor, 64, primitiveAgentNeighbor_size);
+
+        primitiveOrcaLines_size = (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(Line));
+        err |= posix_memalign((void**)primitiveOrcaLines, 64, primitiveOrcaLines_size);
+
+        if (err){
+            throw "posix_memalign failed!";
+        }
     }
 
 #define DEBUGON 0
@@ -331,19 +341,20 @@ namespace RVO {
         double simStartStamp = 0, simBuildAgentTreeStamp = 0, simVelocitiesStamp = 0;
 
         kdTree_->buildAgentTree();
-        std::cout << agents_[0]->position_.x() << std::endl;
+        //std::cout << agents_[0]->position_.x() << std::endl;
+        const unsigned numAgents = static_cast<unsigned>(agents_.size());
 
         // If OpenCL is enabled, do the simulation via OpenCL kernel
         if(oclobjects_ && cmdparser_ && !cmdparser_->no_opencl.getValue())
         {
 
-            cl_uint maxNeighbors = defaultAgent_->maxNeighbors_;
+            unsigned maxNeighbors = defaultAgent_->maxNeighbors_;
 /*
             if (primitiveAgentNeighbor.size() < maxNeighbors*agents_.size())
                 primitiveAgentNeighbor.resize(maxNeighbors*agents_.size());
 */
             #ifdef FORCE_C_NEIGHBORS_KERNEL
-            for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
+            for (int i = 0; i < numAgents; ++i) {
                 agents_[i]->computeNeighbors();
                 //printf("[ INFO ] Agent %d has %d neighbours.\n", i, agents_[i]->numAgentNeighbors_);
                 for (int j=0; j<agents_[i]->numAgentNeighbors_; ++j){
@@ -353,7 +364,7 @@ namespace RVO {
             }
             #endif
             //std::cout << "primitiveAgentNeighbor size = " << primitiveAgentNeighbor.size() << "\n";
-            size_t newAgentsBufferSize = agents_.size() * sizeof(Agent);
+            size_t newAgentsBufferSize = numAgents * sizeof(Agent);
             cl_int err = CL_SUCCESS;
             
             if(newAgentsBufferSize > agentsBufferSize_)
@@ -381,10 +392,10 @@ namespace RVO {
                 // defaultAgent contains the default maximum parameters used for all agents (hopefully)
                 
                 size_t numOrcaLines = defaultAgent_->maxObstacleNeighbors_ + maxNeighbors;
-                std::cout << "[ INFO ] resize to " << numOrcaLines*agents_.size() << "\n";
+                //std::cout << "[ INFO ] resize to " << numOrcaLines*agents_.size() << "\n";
                 //primitiveOrcaLines.resize(numOrcaLines*agents_.size());
 
-                for(int i=0; i<agents_.size(); ++i){
+                for(int i=0; i<numAgents; ++i){
                     // will be 0, but just in case
                     
                     for (int j=0; j<agents_[i]->numOrcaLines_; ++j){
@@ -426,15 +437,15 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentsBuffer of size " << newAgentsBufferSize << "\n";
 
-                agentsForTreeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(unsigned)*agents_.size(), &primitiveAgentsForTree[0], &err);
+                agentsForTreeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentsForTreeBuffer\n";
                 
-                agentNeighborBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(AgentNeighborBuf)*primitiveAgentNeighbor.size(), &primitiveAgentNeighbor[0], &err);
+                agentNeighborBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, primitiveAgentNeighbor_size, &primitiveAgentNeighbor[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentNeighborBuffer\n";
 
-                orcaLineBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(Line)*primitiveOrcaLines.size(), &primitiveOrcaLines[0], &err);
+                orcaLineBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, primitiveOrcaLines_size, &primitiveOrcaLines[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created orcaLineBuffer\n";                
 
@@ -442,11 +453,11 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created treeBuffer\n";
 
-                projBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, sizeof(Line)*primitiveOrcaLines.size(), NULL, &err);
+                projBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, primitiveOrcaLines_size, NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created projBuffer\n";
 
-                stackBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, sizeof(StackNode)*agents_.size(), NULL, &err);
+                stackBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, sizeof(StackNode)*numAgents, NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created stackBuffer\n";
 
@@ -465,20 +476,26 @@ namespace RVO {
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, treeBuffer, CL_TRUE, 0, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
 
+                /*
                 primitiveAgents.clear();
                 primitiveAgentsForTree.clear();
-                for(int i=0; i<agents_.size(); ++i){              
+                for(int i=0; i<numAgents; ++i){              
                     primitiveAgents.push_back(*agents_[i]);
                     primitiveAgentsForTree.push_back(kdTree_->agents_[i]->id_);
+                }
+                */
+                for(int i=0; i<numAgents; ++i){
+                    primitiveAgents[i] = *agents_[i];
+                    primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
                 }
 
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsBuffer, CL_TRUE, 0, newAgentsBufferSize, &primitiveAgents[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
 
-                err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsForTreeBuffer, CL_TRUE, 0, sizeof(unsigned)*agents_.size(), &primitiveAgentsForTree[0], 0, NULL, NULL);
+                err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsForTreeBuffer, CL_TRUE, 0, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);          
 
-                err =  clEnqueueWriteBuffer(oclobjects_->queue, agentNeighborBuffer, CL_TRUE, 0, sizeof(AgentNeighborBuf)*primitiveAgentNeighbor.size(), &primitiveAgentNeighbor[0], 0, NULL, NULL);
+                err =  clEnqueueWriteBuffer(oclobjects_->queue, agentNeighborBuffer, CL_TRUE, 0, primitiveAgentNeighbor_size, &primitiveAgentNeighbor[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);           
             }
 

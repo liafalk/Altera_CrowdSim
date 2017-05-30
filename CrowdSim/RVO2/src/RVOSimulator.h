@@ -677,6 +677,9 @@ namespace RVO {
         AgentNeighborBuf* primitiveAgentNeighbor;
         Line* primitiveOrcaLines;
 
+        unsigned primitiveAgentNeighbor_size;
+        unsigned primitiveOrcaLines_size;
+
         Agent *defaultAgent_;
         float globalTime_;
         KdTree *kdTree_;
