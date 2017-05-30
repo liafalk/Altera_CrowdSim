@@ -318,20 +318,20 @@ namespace RVO {
         printf("[ INFO ] Starting init of memory aligned buffers.\n");
         unsigned maxNeighbors = defaultAgent_->maxNeighbors_;
         unsigned numAgents = static_cast<unsigned>(agents_.size());
-        unsigned err;
+        int err;
 
-        err |= posix_memalign((void**)primitiveAgents,         64, numAgents*sizeof(Agent));
+        err += posix_memalign((void**)primitiveAgents,         64, numAgents*sizeof(Agent));
         printf("1...");
-        
-        err |= posix_memalign((void**)primitiveAgentsForTree,  64, numAgents*sizeof(unsigned));
+
+        err += posix_memalign((void**)primitiveAgentsForTree,  64, numAgents*sizeof(unsigned));
         printf("2...");
 
         primitiveAgentNeighbor_size = maxNeighbors*agents_.size()*sizeof(AgentNeighborBuf);
-        err |= posix_memalign((void**)primitiveAgentNeighbor, 64, primitiveAgentNeighbor_size);
+        err += posix_memalign((void**)primitiveAgentNeighbor, 64, primitiveAgentNeighbor_size);
         printf("3...");
 
         primitiveOrcaLines_size = (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(Line);
-        err |= posix_memalign((void**)primitiveOrcaLines, 64, primitiveOrcaLines_size);
+        err += posix_memalign((void**)primitiveOrcaLines, 64, primitiveOrcaLines_size);
         printf("4...");
 
         if (err){
