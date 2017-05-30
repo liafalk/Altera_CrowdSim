@@ -323,7 +323,7 @@ namespace RVO {
         err = posix_memalign((void**)primitiveAgents, 64, numAgents*sizeof(Agent));
         printf("primitiveAgents = %d\n", err);
 
-        err = posix_memalign((void**)primitiveAgentsForTree,  64, numAgents*sizeof(unsigned));
+        err = posix_memalign((void**)primitiveAgentsForTree, 64, numAgents*sizeof(unsigned));
         printf("primitiveAgentsForTree = %d\n", err);
 
         primitiveAgentNeighbor_size = maxNeighbors*agents_.size()*sizeof(AgentNeighborBuf);
