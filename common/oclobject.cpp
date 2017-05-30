@@ -763,6 +763,7 @@ cl_kernel OpenCLProgramMultipleKernels::operator[](const std::string& kernel_nam
     if(kMap.end() == it)    //this kernel hasn't been used yet
     {
         cl_int err = 0;
+	printf("[ INFO ] Creating kernel %s ...\n", kernel_name.c_str());
         krnl = clCreateKernel(program, kernel_name.c_str(), &err);
         SAMPLE_CHECK_ERRORS(err);
 

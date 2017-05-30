@@ -1,5 +1,6 @@
 CMakeCache.txt
 Makefile
+CrowdSim_CL
 
 *.sln
 *.cmake
