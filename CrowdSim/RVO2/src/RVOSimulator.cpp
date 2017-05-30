@@ -321,21 +321,19 @@ namespace RVO {
         unsigned numAgents = static_cast<unsigned>(agents_.size());
         int err;
 
-        printf("(void*) size = %d\n", sizeof(void*));
-
         err = posix_memalign((void**)&primitiveAgents, 64, numAgents*sizeof(Agent));
-        printf("primitiveAgents = %d\n", err);
+        printf("primitiveAgents created (%d).\n", err);
 
         err = posix_memalign((void**)&primitiveAgentsForTree, 64, numAgents*sizeof(unsigned));
-        printf("primitiveAgentsForTree = %d\n", err);
+        printf("primitiveAgentsForTree created (%d).\n", err);
 
         primitiveAgentNeighbor_size = maxNeighbors*agents_.size()*sizeof(AgentNeighborBuf);
         err = posix_memalign((void**)&primitiveAgentNeighbor, 64, primitiveAgentNeighbor_size);
-        printf("primitiveAgentNeighbor = %d\n", err);
+        printf("primitiveAgentNeighbor created (%d).\n", err);
 
         primitiveOrcaLines_size = (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(Line);
         err = posix_memalign((void**)&primitiveOrcaLines, 64, primitiveOrcaLines_size);
-        printf("primitiveOrcaLines = %d\n", err);
+        printf("primitiveOrcaLines created (%d).\n", err);
     }
 
 #define DEBUGON 0
@@ -476,11 +474,6 @@ namespace RVO {
                 agentsBufferSize_ = newAgentsBufferSize;
             }
             else{ // if not, we need to update the kdTree and neighbours!
-                std::cout << "[ INFO ] Updated treeBuffer\n";
-                std::cout << kdTree_->agentTree_[1].minX << std::endl;
-                err =  clEnqueueWriteBuffer(oclobjects_->queue, treeBuffer, CL_TRUE, 0, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], 0, NULL, NULL);
-                SAMPLE_CHECK_ERRORS(err);
-
                 /*
                 primitiveAgents.clear();
                 primitiveAgentsForTree.clear();
@@ -493,6 +486,9 @@ namespace RVO {
                     primitiveAgents[i] = *agents_[i];
                     primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
                 }
+                
+                err =  clEnqueueWriteBuffer(oclobjects_->queue, treeBuffer, CL_TRUE, 0, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], 0, NULL, NULL);
+                SAMPLE_CHECK_ERRORS(err);
 
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsBuffer, CL_TRUE, 0, newAgentsBufferSize, &primitiveAgents[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
