@@ -241,8 +241,8 @@ void SimulateCL::Init (
 
     printf("[ INFO ] Finish scenario setup.\n");
 
-    printf("[ INFO ] Initializing memory aligned buffers.\n");
     crowd_sim->allocateMemAlignedBuffers();
+    printf("[ INFO ] Finished initializing memory aligned buffers.\n");
 
     if(!cmdparser->no_graphics.getValue())
     {
