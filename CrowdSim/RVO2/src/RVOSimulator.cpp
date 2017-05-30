@@ -59,6 +59,7 @@
 #include "Agent.h"
 #include "KdTree.h"
 #include "Obstacle.h"
+#include <stdlib.h>
 
 #ifdef _OPENMP
 #include <omp.h>
