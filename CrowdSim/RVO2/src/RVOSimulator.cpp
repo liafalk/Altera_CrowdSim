@@ -323,18 +323,18 @@ namespace RVO {
 
         printf("(void*) size = %d\n", sizeof(void*));
 
-        err = posix_memalign((void**)primitiveAgents, 64, numAgents*sizeof(Agent));
+        err = posix_memalign((void**)&primitiveAgents, 64, numAgents*sizeof(Agent));
         printf("primitiveAgents = %d\n", err);
 
-        err = posix_memalign((void**)primitiveAgentsForTree, 64, numAgents*sizeof(unsigned));
+        err = posix_memalign((void**)&primitiveAgentsForTree, 64, numAgents*sizeof(unsigned));
         printf("primitiveAgentsForTree = %d\n", err);
 
         primitiveAgentNeighbor_size = maxNeighbors*agents_.size()*sizeof(AgentNeighborBuf);
-        err = posix_memalign((void**)primitiveAgentNeighbor, 64, primitiveAgentNeighbor_size);
+        err = posix_memalign((void**)&primitiveAgentNeighbor, 64, primitiveAgentNeighbor_size);
         printf("primitiveAgentNeighbor = %d\n", err);
 
         primitiveOrcaLines_size = (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(Line);
-        err = posix_memalign((void**)primitiveOrcaLines, 64, primitiveOrcaLines_size);
+        err = posix_memalign((void**)&primitiveOrcaLines, 64, primitiveOrcaLines_size);
         printf("primitiveOrcaLines = %d\n", err);
     }
 
