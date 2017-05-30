@@ -320,6 +320,8 @@ namespace RVO {
         unsigned numAgents = static_cast<unsigned>(agents_.size());
         int err;
 
+        printf("(void*) size = %d\n", sizeof(void*));
+
         err = posix_memalign((void**)primitiveAgents, 64, numAgents*sizeof(Agent));
         printf("primitiveAgents = %d\n", err);
 
