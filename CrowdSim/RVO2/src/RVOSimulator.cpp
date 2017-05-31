@@ -502,7 +502,7 @@ namespace RVO {
 
             // Agents themselves are not passed to kernel explicitly, instead an array of pointer to agents is passed.
             //err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 0, agentsBufferPtr_);
-            std::cout << "[ INFO ] size " << newAgentsBufferSize << "\n";
+            //std::cout << "[ INFO ] size " << newAgentsBufferSize << "\n";
             //err = clSetKernelArg(kernelComputeNewVelocity_, 0, newAgentsBufferSize, &agentsBuffer);
             err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
@@ -617,7 +617,7 @@ namespace RVO {
                 //printf("id %d: agent=%f, primAgent=%f\n", i, agents_[i]->position_.x(), primitiveAgents[i].position_.x());
 
             }
-            std::cout << agents_[0]->velocity_.x() << std::endl;
+            //std::cout << agents_[0]->velocity_.x() << std::endl;
             if(DEBUGON)
             {
                 simVelocitiesStamp = time_stamp();
