@@ -388,9 +388,6 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
     //crowd_sim->doStep();
     crowd_sim->doStep_NoSVM();
 
-#define TESTID 0
-    //printf("Agent 0's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
-
     cartesian_canvas canvas(399,399);
     canvas.image().clear(255);
 
@@ -400,6 +397,9 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
 
     for (int i=0; i<crowd_sim->getNumAgents(); ++i){
         canvas.circle(crowd_sim->getAgentPosition(i).x(),crowd_sim->getAgentPosition(i).y(),1);
+        int TESTID = i;
+        printf("Agent %d's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", TESTID, crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), 
+            crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
     }
     canvas.image().save_image("output/" + std::to_string(iteration) + ".bmp");
 

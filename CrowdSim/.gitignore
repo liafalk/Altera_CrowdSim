@@ -10,6 +10,7 @@ CrowdSim_CL
 
 *.aocx
 *.aoco
+*.mp4
 
 .idea/
 cmake-build-debug/

@@ -336,7 +336,7 @@ namespace RVO {
         printf("primitiveOrcaLines created (%d).\n", err);
     }
 
-#define DEBUGON 0
+#define DEBUGON 1
 #define FORCE_C_NEIGHBORS_KERNEL
     void RVOSimulator::doStep_NoSVM()
     {
