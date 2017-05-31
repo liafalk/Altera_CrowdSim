@@ -151,42 +151,9 @@ typedef struct __ObstacleTreeNode
     __global struct __ObstacleTreeNode *right;
 } ObstacleTreeNode;
 
-inline float simFabs(float a)
-{
-    if (a < 0.0f)
-        return -a;
-    else
-        return a;
-}
-
-inline float simDot(Vector2 a, Vector2 b)
-{
-    return a.x*b.x+a.y*b.y;
-}
-
-inline float simSqrt(float a)
-{
-    float r = sqrt((float)a);
-    return (float)r;
-}
-
-inline float simLength(Vector2 a)
-{
-    return simSqrt(a.x*a.x+a.y*a.y);
-}
-
-inline Vector2 simNormalize(Vector2 a)
-{
-    float len = simLength(a);
-    Vector2 res;
-    res.x = a.x/len;
-    res.y = a.y/len;
-    return res;
-}
-
 inline float absSq(Vector2 vector)
 {
-    return simDot(vector, vector);
+    return dot(vector, vector);
 }
 
 
@@ -349,7 +316,7 @@ void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __glob
 
 bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const Vector2 optVelocity, bool directionOpt, __global Vector2 *result, uint orcaBias)
 {
-    const float dotProduct = simDot(lines[orcaBias + lineNo].point, lines[orcaBias + lineNo].direction);
+    const float dotProduct = dot(lines[orcaBias + lineNo].point, lines[orcaBias + lineNo].direction);
     const float discriminant = sqr(dotProduct) + sqr(radius) - absSq(lines[orcaBias + lineNo].point);
 
     if (discriminant < 0.0f) {
@@ -357,7 +324,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
         return false;
     }
 
-    const float sqrtDiscriminant = simSqrt(discriminant);
+    const float sqrtDiscriminant = sqrt(discriminant);
     float tLeft = -dotProduct - sqrtDiscriminant;
     float tRight = -dotProduct + sqrtDiscriminant;
 
@@ -367,7 +334,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
         const float denominator = det(lines[orcaBias + lineNo].direction, lines[orcaBias + i].direction);
         const float numerator = det(lines[orcaBias + i].direction, lines[orcaBias + lineNo].point - lines[orcaBias + i].point);
 
-        if (simFabs(denominator) <= RVO_EPSILON) {
+        if (fabs(denominator) <= RVO_EPSILON) {
             /* Lines lineNo and i are (almost) parallel. */
             if (numerator < 0.0f) {
                 returnnow = 1;
@@ -400,7 +367,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
 
     if (directionOpt) {
         /* Optimize direction. */
-        if (simDot(optVelocity, lines[orcaBias + lineNo].direction) > 0.0f) {
+        if (dot(optVelocity, lines[orcaBias + lineNo].direction) > 0.0f) {
             /* Take right extreme. */
             *result = lines[orcaBias + lineNo].point + tRight * lines[orcaBias + lineNo].direction;
         }
@@ -411,7 +378,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
     }
     else {
         /* Optimize closest point. */
-        const float t = simDot(lines[orcaBias + lineNo].direction, (optVelocity - lines[orcaBias + lineNo].point));
+        const float t = dot(lines[orcaBias + lineNo].direction, (optVelocity - lines[orcaBias + lineNo].point));
 
         if (t < tLeft) {
             *result = lines[orcaBias + lineNo].point + tLeft * lines[orcaBias + lineNo].direction;
@@ -439,7 +406,7 @@ uint linearProgram2(const __global Line* lines, uint numLines, float radius, con
     }
     else if (absSq(optVelocity) > sqr(radius)) {
         /* Optimize closest point and outside circle. */  
-        *result = simNormalize(optVelocity) * radius;
+        *result = normalize(optVelocity) * radius;
     }
     else {
         /* Optimize closest point and inside circle. */ 
@@ -479,9 +446,9 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
                 float determinant = det(lines[orcaBias + i].direction, lines[orcaBias + j].direction);
 
-                if (simFabs(determinant) <= RVO_EPSILON) {
+                if (fabs(determinant) <= RVO_EPSILON) {
                     /* Line i and line j are parallel. */
-                    if (simDot(lines[orcaBias + i].direction, lines[orcaBias + j].direction) > 0.0f) {
+                    if (dot(lines[orcaBias + i].direction, lines[orcaBias + j].direction) > 0.0f) {
                         /* Line i and line j point in the same direction. */
                         continue;
                     }
@@ -494,7 +461,7 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
                     line.point = lines[orcaBias + i].point + (det(lines[orcaBias + j].direction, lines[orcaBias + i].point - lines[orcaBias + j].point) / determinant) * lines[orcaBias + i].direction;
                 }
 
-                line.direction = simNormalize(lines[orcaBias + j].direction - lines[orcaBias + i].direction);
+                line.direction = normalize(lines[orcaBias + j].direction - lines[orcaBias + i].direction);
                 projLines[numProjLines++] = line;
             }
 
@@ -516,7 +483,8 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
 
 __kernel
-void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines, __global unsigned* restrict agentsForTree, __global StackNode* restrict stack)
+//void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines), //__global unsigned* restrict agentsForTree, __global StackNode* restrict stack)
+void computeNewVelocity(__global Agent* restrict agents, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines)
 {
     #if 1
     __global Agent* agent = &agents[get_global_id(0)];
@@ -561,11 +529,11 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
             /* Vector from cutoff center to relative velocity. */
             const float wLengthSq = absSq(w);
 
-            const float dotProduct1 = simDot(w, relativePosition);
+            const float dotProduct1 = dot(w, relativePosition);
 
             if (dotProduct1 < 0.0f && sqr(dotProduct1) > combinedRadiusSq * wLengthSq) {
                 /* Project on cut-off circle. */
-                const float wLength = simSqrt(wLengthSq);
+                const float wLength = sqrt(wLengthSq);
                 const Vector2 unitW = w / wLength;
 
                 line.direction = (Vector2)(unitW.y, -unitW.x);
@@ -573,7 +541,7 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
             }
             else {
                 /* Project on legs. */
-                const float leg = simSqrt(distSq - combinedRadiusSq);
+                const float leg = sqrt(distSq - combinedRadiusSq);
 
                 if (det(relativePosition, w) > 0.0f) {
                     /* Project on left leg. */
@@ -584,7 +552,7 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
                     line.direction = -(Vector2)(relativePosition.x * leg + relativePosition.y * combinedRadius, -relativePosition.x * combinedRadius + relativePosition.y * leg) / distSq;
                 }
 
-                const float dotProduct2 = simDot(relativeVelocity, line.direction);
+                const float dotProduct2 = dot(relativeVelocity, line.direction);
 
                 u = dotProduct2 * line.direction - relativeVelocity;
             }
@@ -596,7 +564,7 @@ void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode*
             /* Vector from cutoff center to relative velocity. */
             const Vector2 w = relativeVelocity - invTimeStep * relativePosition;
 
-            const float wLength = simLength(w);
+            const float wLength = length(w);
             const Vector2 unitW = w / wLength;
 
             line.direction = (Vector2)(unitW.y, -unitW.x);

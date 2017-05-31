@@ -433,17 +433,13 @@ namespace RVO {
 
                     // implementation with malloc (already sized array)
                     primitiveAgents[i] = *agents_[i];
-                    primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
+                    //primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
                 }
                 
                 agentsBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, newAgentsBufferSize, &primitiveAgents[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentsBuffer of size " << newAgentsBufferSize << "\n";
 
-                agentsForTreeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], &err);
-                SAMPLE_CHECK_ERRORS(err);
-                std::cout << "[ INFO ] Created agentsForTreeBuffer\n";
-                
                 agentNeighborBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, primitiveAgentNeighbor_size, &primitiveAgentNeighbor[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentNeighborBuffer\n";
@@ -452,17 +448,23 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created orcaLineBuffer\n";                
 
-                treeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], &err);
-                SAMPLE_CHECK_ERRORS(err);
-                std::cout << "[ INFO ] Created treeBuffer\n";
-
                 projBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, primitiveOrcaLines_size, NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created projBuffer\n";
 
+                /*
+                treeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], &err);
+                SAMPLE_CHECK_ERRORS(err);
+                std::cout << "[ INFO ] Created treeBuffer\n";
+
+                agentsForTreeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], &err);
+                SAMPLE_CHECK_ERRORS(err);
+                std::cout << "[ INFO ] Created agentsForTreeBuffer\n";
+
                 stackBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, sizeof(StackNode)*numAgents, NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created stackBuffer\n";
+                */
 
                 if(DEBUGON)
                 {
@@ -474,39 +476,31 @@ namespace RVO {
                 agentsBufferSize_ = newAgentsBufferSize;
             }
             else{ // if not, we need to update the kdTree and neighbours!
-                /*
-                primitiveAgents.clear();
-                primitiveAgentsForTree.clear();
-                for(int i=0; i<numAgents; ++i){              
-                    primitiveAgents.push_back(*agents_[i]);
-                    primitiveAgentsForTree.push_back(kdTree_->agents_[i]->id_);
-                }
-                */
+
                 for(int i=0; i<numAgents; ++i){
                     primitiveAgents[i] = *agents_[i];
-                    primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
+                    //primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
                 }
                 
-                err =  clEnqueueWriteBuffer(oclobjects_->queue, treeBuffer, CL_TRUE, 0, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], 0, NULL, NULL);
-                SAMPLE_CHECK_ERRORS(err);
-
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsBuffer, CL_TRUE, 0, newAgentsBufferSize, &primitiveAgents[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
 
-                err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsForTreeBuffer, CL_TRUE, 0, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], 0, NULL, NULL);
-                SAMPLE_CHECK_ERRORS(err);          
-
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentNeighborBuffer, CL_TRUE, 0, primitiveAgentNeighbor_size, &primitiveAgentNeighbor[0], 0, NULL, NULL);
-                SAMPLE_CHECK_ERRORS(err);           
+                SAMPLE_CHECK_ERRORS(err);                
+                
+                /*
+                err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsForTreeBuffer, CL_TRUE, 0, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], 0, NULL, NULL);
+                SAMPLE_CHECK_ERRORS(err);
+                          
+                err =  clEnqueueWriteBuffer(oclobjects_->queue, treeBuffer, CL_TRUE, 0, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], 0, NULL, NULL);
+                SAMPLE_CHECK_ERRORS(err);
+                */           
             }
 
-            // Agents themselves are not passed to kernel explicitly, instead an array of pointer to agents is passed.
-            //err = clSetKernelArgSVMPointer(kernelComputeNewVelocity_, 0, agentsBufferPtr_);
-            //std::cout << "[ INFO ] size " << newAgentsBufferSize << "\n";
-            //err = clSetKernelArg(kernelComputeNewVelocity_, 0, newAgentsBufferSize, &agentsBuffer);
+/*          If you ever need to enable OpenCL computation of the AgentNeighbors, uncomment this space...!
             err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
-
+            
             err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(cl_mem), &treeBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
@@ -526,6 +520,22 @@ namespace RVO {
             SAMPLE_CHECK_ERRORS(err);
 
             err = clSetKernelArg(kernelComputeNewVelocity_, 7 , sizeof(cl_mem), &stackBuffer);
+            SAMPLE_CHECK_ERRORS(err);
+*/
+
+            err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
+            SAMPLE_CHECK_ERRORS(err);
+
+            err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(timeStep_), &timeStep_);
+            SAMPLE_CHECK_ERRORS(err);
+            
+            err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(cl_mem), &agentNeighborBuffer);
+            SAMPLE_CHECK_ERRORS(err);
+
+            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(cl_mem), &orcaLineBuffer);
+            SAMPLE_CHECK_ERRORS(err);
+
+            err = clSetKernelArg(kernelComputeNewVelocity_, 4, sizeof(cl_mem), &projBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
             size_t global_size = agents_.size();
