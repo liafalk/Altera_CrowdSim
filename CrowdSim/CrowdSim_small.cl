@@ -110,16 +110,15 @@ __global StackNode* push (__global StackNode* stackNode, uint retCode, float dis
 __kernel
 void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
-    __global Agent* agent = &agents[get_global_id(0)];
-    //Agent agent2 = 
+    Agent agent = agents[get_global_id(0)];
 
-    agent->numObstacleNeighbors_ = 0;
-    volatile float rangeSq = sqr(agent->timeHorizonObst_ * agent->maxSpeed_ + agent->radius_);
+    agent.numObstacleNeighbors_ = 0;
+    volatile float rangeSq = sqr(agent.timeHorizonObst_ * agent.maxSpeed_ + agent.radius_);
     
-    agent->numAgentNeighbors_ = 0;
+    agent.numAgentNeighbors_ = 0;
 
-    if (agent->maxNeighbors_ > 0) {
-        rangeSq = sqr(agent->neighborDist_);
+    if (agent.maxNeighbors_ > 0) {
+        rangeSq = sqr(agent.neighborDist_);
         uint node = 0;
         __global StackNode* stackTop = &stack[get_global_id(0)];
         uint retCode = 0;
@@ -135,16 +134,15 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
                     if (agentTree_[node].end - agentTree_[node].begin <= RVO_MAX_LEAF_SIZE) {                    
                         for (uint i = agentTree_[node].begin; i < agentTree_[node].end; ++i) {
                             const uint nextID = agents[agentsForTree[i]].id_;
-                            if (agent->id_ != nextID) {
+                            if (agent.id_ != nextID) {
 
-                                const float distSq = absSq(agent->position_ - agents[agentsForTree[i]].position_);
+                                const float distSq = absSq(agent.position_ - agents[agentsForTree[i]].position_);
                                 
                                 if (distSq < rangeSq) {
-                                    const uint maxNeighbors = agent->maxNeighbors_;
-                                    const uint indexBias = maxNeighbors*get_global_id(0);
-                                    uint numAgents = agent->numAgentNeighbors_;
+                                    const uint indexBias = agent.maxNeighbors_*get_global_id(0);
+                                    uint numAgents = agent.numAgentNeighbors_;
 
-                                    if (numAgents < maxNeighbors) {
+                                    if (numAgents < agent.maxNeighbors_) {
                                         agentNeighbors[indexBias + numAgents].first = distSq;
                                         agentNeighbors[indexBias + numAgents].second = nextID;
                                         numAgents++;
@@ -160,7 +158,7 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
                                     agentNeighbors[indexBias+i].first = distSq;
                                     agentNeighbors[indexBias+i].second = nextID;
 
-                                    if (numAgents == maxNeighbors) {
+                                    if (numAgents == agent.maxNeighbors_) {
                                         // TODO FIX: assigning rangeSq to any value crashes the compiler ??
                                         //rangeSq = agentNeighbors[indexBias + agent->numAgentNeighbors_ - 1].first;
                                         //rangeSq = 2.0f;
@@ -174,17 +172,17 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
                     else {
                         const volatile uint leftNode = agentTree_[node].left;
                         distSqLeft =
-                            sqr(max(0.0f, agentTree_[leftNode].minX - agent->position_.x)) +
-                            sqr(max(0.0f, agent->position_.x - agentTree_[leftNode].maxX)) +
-                            sqr(max(0.0f, agentTree_[leftNode].minY - agent->position_.y)) +
-                            sqr(max(0.0f, agent->position_.y - agentTree_[leftNode].maxY));
+                            sqr(max(0.0f, agentTree_[leftNode].minX - agent.position_.x)) +
+                            sqr(max(0.0f, agent.position_.x - agentTree_[leftNode].maxX)) +
+                            sqr(max(0.0f, agentTree_[leftNode].minY - agent.position_.y)) +
+                            sqr(max(0.0f, agent.position_.y - agentTree_[leftNode].maxY));
 
                         const volatile uint rightNode = agentTree_[node].right;
                         distSqRight =
-                            sqr(max(0.0f, agentTree_[rightNode].minX - agent->position_.x)) +
-                            sqr(max(0.0f, agent->position_.x - agentTree_[rightNode].maxX)) +
-                            sqr(max(0.0f, agentTree_[rightNode].minY - agent->position_.y)) +
-                            sqr(max(0.0f, agent->position_.y - agentTree_[rightNode].maxY));
+                            sqr(max(0.0f, agentTree_[rightNode].minX - agent.position_.x)) +
+                            sqr(max(0.0f, agent.position_.x - agentTree_[rightNode].maxX)) +
+                            sqr(max(0.0f, agentTree_[rightNode].minY - agent.position_.y)) +
+                            sqr(max(0.0f, agent.position_.y - agentTree_[rightNode].maxY));
                         
                         if (distSqLeft < distSqRight) {
                             if (distSqLeft < rangeSq) {
