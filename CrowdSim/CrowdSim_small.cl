@@ -113,7 +113,7 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
     Agent agent = agents[get_global_id(0)];
 
     agent.numObstacleNeighbors_ = 0;
-    volatile float rangeSq = sqr(agent.timeHorizonObst_ * agent.maxSpeed_ + agent.radius_);
+    float rangeSq = sqr(agent.timeHorizonObst_ * agent.maxSpeed_ + agent.radius_);
     
     agent.numAgentNeighbors_ = 0;
 
@@ -160,7 +160,7 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
 
                                     if (numAgents == agent.maxNeighbors_) {
                                         // TODO FIX: assigning rangeSq to any value crashes the compiler ??
-                                        //rangeSq = agentNeighbors[indexBias + agent->numAgentNeighbors_ - 1].first;
+                                        //rangeSq = agentNeighbors[indexBias + agent.numAgentNeighbors_ - 1].first;
                                         //rangeSq = 2.0f;
                                     }
 
