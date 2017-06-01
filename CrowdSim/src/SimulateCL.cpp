@@ -398,8 +398,10 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
     for (int i=0; i<crowd_sim->getNumAgents(); ++i){
         canvas.circle(crowd_sim->getAgentPosition(i).x(),crowd_sim->getAgentPosition(i).y(),1);
         int TESTID = i;
+        #ifdef DEBUG_PRINT_ALL_AGENTS
         printf("Agent %d's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", TESTID, crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), 
             crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
+        #endif
     }
     canvas.image().save_image("output/" + std::to_string(iteration) + ".bmp");
 
