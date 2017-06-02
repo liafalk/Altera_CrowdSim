@@ -97,8 +97,8 @@ cl_platform_id selectPlatform (const string& platform_name_or_index)
     err = clGetPlatformIDs(num_of_platforms, &platforms[0], 0);
     SAMPLE_CHECK_ERRORS(err);
 
-    cl_uint selected_platform_index = num_of_platforms;
-    bool by_index = false;
+    cl_uint selected_platform_index = 0;//num_of_platforms;
+    bool by_index = true;
 
     if(is_number(platform_name_or_index))
     {
