@@ -248,15 +248,16 @@ void SimulateCL::Init (
     {
         if(!cmdparser->no_gl_sharing.getValue())
         {
-            status = clEnqueueAcquireGLObjects(oclobjects->queue, 1, &m_points, 0, 0, 0);
-            SAMPLE_CHECK_ERRORS(status);
+            // FIXME: make this compile 
+            // status = clEnqueueAcquireGLObjects(oclobjects->queue, 1, &m_points, 0, 0, 0);
+            // SAMPLE_CHECK_ERRORS(status); 
 
-            status = clEnqueueWriteBuffer(oclobjects->queue, m_points, CL_TRUE, 0, crowd_sim->getNumAgents() * sizeof(cl_float4), m_agents, 0, NULL, NULL);
-            SAMPLE_CHECK_ERRORS(status);
+            //  status = clEnqueueWriteBuffer(oclobjects->queue, m_points, CL_TRUE, 0, crowd_sim->getNumAgents() * sizeof(cl_float4), m_agents, 0, NULL, NULL);
+            //  SAMPLE_CHECK_ERRORS(status);
 
             // release buffers
-            status = clEnqueueReleaseGLObjects(oclobjects->queue, 1, &m_points, 0, 0, 0);
-            SAMPLE_CHECK_ERRORS(status);
+            //  status = clEnqueueReleaseGLObjects(oclobjects->queue, 1, &m_points, 0, 0, 0);
+            //  SAMPLE_CHECK_ERRORS(status);
 
             status = clFinish(oclobjects->queue);
             SAMPLE_CHECK_ERRORS(status);
@@ -292,8 +293,9 @@ void SimulateCL::ShareBuffers(
     cl_int status;
     if(!cmdparser->no_graphics.getValue() && !cmdparser->no_gl_sharing.getValue())
     {
-        m_points = clCreateFromGLBuffer(oclobjects->context, CL_MEM_READ_WRITE, in_points, &status);
-        SAMPLE_CHECK_ERRORS(status);
+        // FIXME: make this compile
+        // m_points = clCreateFromGLBuffer(oclobjects->context, CL_MEM_READ_WRITE, in_points, &status);
+        // SAMPLE_CHECK_ERRORS(status);
     }
 }
 
@@ -307,8 +309,9 @@ void SimulateCL::Step(float in_deltaT)
         // acquire postions buffer
         if(!cmdparser->no_gl_sharing.getValue())
         {
-            status = clEnqueueAcquireGLObjects(oclobjects->queue, 1, &m_points, 0, 0, 0);
-            SAMPLE_CHECK_ERRORS(status);
+            // FIXME: make this compile
+            //status = clEnqueueAcquireGLObjects(oclobjects->queue, 1, &m_points, 0, 0, 0);
+            //SAMPLE_CHECK_ERRORS(status);
         }
 
         StepNoGraphics(&kernelTime, 0);
@@ -330,8 +333,9 @@ void SimulateCL::Step(float in_deltaT)
             {
                 // As it is shared with OpenCL buffer, OpenCL buffer is updated here.
                 // Write the crowd positions to the m_points buffer that is shared with GL
-                status = clEnqueueWriteBuffer(oclobjects->queue, m_points, CL_TRUE, 0, crowd_sim->getNumAgents() * sizeof(cl_float4), m_agents, 0, NULL, NULL);
-                SAMPLE_CHECK_ERRORS(status);
+                // FIXME: make this compile
+                //status = clEnqueueWriteBuffer(oclobjects->queue, m_points, CL_TRUE, 0, crowd_sim->getNumAgents() * sizeof(cl_float4), m_agents, 0, NULL, NULL);
+                //SAMPLE_CHECK_ERRORS(status);
             }
             else
             {
@@ -344,8 +348,9 @@ void SimulateCL::Step(float in_deltaT)
         if(!cmdparser->no_gl_sharing.getValue())
         {
             // release positions buffer
-            status = clEnqueueReleaseGLObjects(oclobjects->queue, 1, &m_points, 0, 0, 0);
-            SAMPLE_CHECK_ERRORS(status);
+            // FIXME: make this compile
+            //status = clEnqueueReleaseGLObjects(oclobjects->queue, 1, &m_points, 0, 0, 0);
+            //SAMPLE_CHECK_ERRORS(status);
 
             status = clFinish(oclobjects->queue);
             SAMPLE_CHECK_ERRORS(status);
