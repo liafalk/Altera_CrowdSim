@@ -1,0 +1,17 @@
+CMakeCache.txt
+CMakeLists.txt
+Makefile
+CrowdSim_CL
+
+*.sln
+*.cmake
+*.a
+*.bmp
+
+*.aocx
+*.aoco
+*.mp4
+
+.idea/
+cmake-build-debug/
+CMakeFiles/
