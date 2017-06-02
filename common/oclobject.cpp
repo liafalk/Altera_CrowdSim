@@ -583,10 +583,10 @@ cl_program createAndBuildProgram (
     // TODO Using prepared length and not terminating by 0 is better way?
     //cl_program program = clCreateProgramWithSource(context, 1, &raw_text, 0, &err);
 
-    if(!aocl_utils::fileExists((const char*)"CrowdSim_release.aocx"))
+    if(!aocl_utils::fileExists((const char*)"CrowdSim.aocx"))
         throw "No!";
         
-    cl_program program = aocl_utils::createProgramFromBinary(context, "CrowdSim_release.aocx", devices, num_of_devices);
+    cl_program program = aocl_utils::createProgramFromBinary(context, "CrowdSim.aocx", devices, num_of_devices);
     //SAMPLE_CHECK_ERRORS(err);
 
     err = clBuildProgram(program, (cl_uint)num_of_devices, devices, build_options.c_str(), 0, 0);

@@ -1,0 +1,17 @@
+Compiler Command: aoc -march=emulator CrowdSim.cl -v
+/home/alex/Altera_CrowdSim/CrowdSimC5/CrowdSim.cl:142:41: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
+                                        ^
+/home/alex/Altera_CrowdSim/CrowdSimC5/CrowdSim.cl:142:73: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
+                                                                        ^
+/home/alex/Altera_CrowdSim/CrowdSimC5/CrowdSim.cl:142:112: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
+                                                                                                               ^
+/home/alex/Altera_CrowdSim/CrowdSimC5/CrowdSim.cl:142:147: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
+                                                                                                                                                  ^
+/home/alex/Altera_CrowdSim/CrowdSimC5/CrowdSim.cl:142:182: warning: declaring kernel argument with no 'restrict' may lead to low kernel performance
+void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
+                                                                                                                                                                                     ^
+5 warnings generated.

@@ -20,6 +20,7 @@
 
 
 #include "Constants.h"
+#pragma OPENCL EXTENSION cl_khr_fp16 : enable
 
 #define TESTID 0
 typedef float2 Vector2;
@@ -72,6 +73,26 @@ typedef struct __ObstacleNeighbor
     __global const struct __Obstacle * second;
 } ObstacleNeighbor;
 
+/*
+#pragma pack(4)
+typedef struct __Agent {
+    uint numAgentNeighbors_; // number of filled elements in agentNeighbors
+    uint maxNeighbors_;
+    float maxSpeed_;
+    float neighborDist_;
+    Vector2 newVelocity_;
+    uint numObstacleNeighbors_; // number of filled elements in agentNeighbors
+    uint maxObstacleNeighbors_;  // number of allocated positions in obstacleNeighbors, can be increased dynamically
+    uint numOrcaLines_;
+    Vector2 position_;
+    Vector2 prefVelocity_;
+    float radius_;
+    float timeHorizon_;
+    float timeHorizonObst_;
+    Vector2 velocity_;
+    uint id_;
+} Agent;
+*/
 
 #pragma pack(4)
 typedef struct __Agent {
@@ -102,7 +123,6 @@ typedef struct __Agent {
     uint id_;
 } Agent;
 
-
 #pragma pack(4)
 typedef struct __PAgent
 {
@@ -131,7 +151,6 @@ typedef struct __ObstacleTreeNode
     __global struct __ObstacleTreeNode *right;
 } ObstacleTreeNode;
 
-
 inline float absSq(Vector2 vector)
 {
     return dot(vector, vector);
@@ -149,54 +168,17 @@ inline float sqr (float x)
     return x*x;
 }
 
-/*
-void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent, float *rangeSq)
-{
-    if (thisAgent != agent) {
-        const float distSq = absSq(thisAgent->position_ - agent->position_);
-
-        if (distSq < *rangeSq) {
-            if (thisAgent->numAgentNeighbors_ < thisAgent->maxNeighbors_) {
-                thisAgent->agentNeighbors_[thisAgent->numAgentNeighbors_].first = distSq;
-                thisAgent->agentNeighbors_[thisAgent->numAgentNeighbors_].second = agent;
-                thisAgent->numAgentNeighbors_++;
-            }
-
-            uint i = thisAgent->numAgentNeighbors_ - 1;
-
-            while (i != 0 && distSq < thisAgent->agentNeighbors_[i - 1].first) {
-                thisAgent->agentNeighbors_[i] = thisAgent->agentNeighbors_[i - 1];
-                --i;
-            }
-
-            thisAgent->agentNeighbors_[i].first = distSq;
-            thisAgent->agentNeighbors_[i].second = agent;
-
-            if (thisAgent->numAgentNeighbors_ == thisAgent->maxNeighbors_) {
-                *rangeSq = thisAgent->agentNeighbors_[thisAgent->numAgentNeighbors_ - 1].first;
-            }
-        }
-    }
-}
-*/
-
 void insertAgentNeighbor(__global Agent *thisAgent, __global const Agent *agent, float *rangeSq, __global AgentNeighborBuf* agentNeighbors)
 {
     if (thisAgent->id_ != agent->id_) {
         const float distSq = absSq(thisAgent->position_ - agent->position_);
 
-        if (get_global_id(0) == TESTID){
-            printf("abs {%f, %f} - {%f, %f} = %f < rangeSq=%f\n", thisAgent->position_.x, thisAgent->position_.y, agent->position_.x, agent->position_.y, distSq, *rangeSq);
-        }
         if (distSq < *rangeSq) {
             uint indexBias = thisAgent->maxNeighbors_*get_global_id(0);
             if (thisAgent->numAgentNeighbors_ < thisAgent->maxNeighbors_) {
                 agentNeighbors[indexBias + thisAgent->numAgentNeighbors_].first = distSq;
                 agentNeighbors[indexBias + thisAgent->numAgentNeighbors_].second = agent->id_;
                 thisAgent->numAgentNeighbors_++;
-                if (get_global_id(0) == TESTID){
-                    printf("Agent 0 now has %d/%d neighbors\n", thisAgent->numAgentNeighbors_, thisAgent->maxNeighbors_);
-                }
             }
 
             uint i = thisAgent->numAgentNeighbors_ - 1;
@@ -224,7 +206,7 @@ typedef struct __StackNode
     uint node;
 } StackNode;
 
-StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float distSqRight, uint node)
+__global StackNode* push (__global StackNode* stackNode, uint retCode, float distSqLeft, float distSqRight, uint node)
 {
     stackNode->retCode = retCode;
     stackNode->distSqLeft = distSqLeft;
@@ -233,10 +215,11 @@ StackNode* push (StackNode* stackNode, uint retCode, float distSqLeft, float dis
     return stackNode + 1;
 }
 
-void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree)
+void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __global AgentTreeNode* agentTree_, float* rangeSq, uint node, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
-    StackNode stack[MAX_KDTREE_DEPTH];
-    StackNode* stackTop = &stack[0];
+    //StackNode stack[MAX_KDTREE_DEPTH];
+    __global StackNode* stackTop = &stack[get_global_id(0)];
+    //StackNode* stackTop = &stack[0];
     uint retCode = 0;
 
     float distSqLeft;
@@ -244,15 +227,11 @@ void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __g
 
     for(;;)
     {
-        if (get_global_id(0) == TESTID) printf("retcode=%d\n", retCode);
         switch(retCode)
         {
             case 0:
                 if (agentTree_[node].end - agentTree_[node].begin <= RVO_MAX_LEAF_SIZE) {                    
                     for (uint i = agentTree_[node].begin; i < agentTree_[node].end; ++i) {
-                        if (get_global_id(0) == TESTID){
-                            printf("%d => %u, %u\n", i, agent->id_, agentsForTree[i]);
-                        }
                         insertAgentNeighbor(agent, &agents_[agentsForTree[i]], rangeSq, agentNeighbors);
                     }
                     break;
@@ -270,10 +249,7 @@ void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __g
                         sqr(max(0.0f, agentTree_[agentTree_[node].right].minY - agent->position_.y)) +
                         sqr(max(0.0f, agent->position_.y - agentTree_[agentTree_[node].right].maxY));
                     
-                    if (get_global_id(0) == TESTID) printf("left=%d, right=%d\n", agentTree_[node].left, agentTree_[node].right);
-                    if (get_global_id(0) == TESTID) printf("left={%f, %f}, right={%f, %f}, pos={%f, %f}\n", agentTree_[agentTree_[node].left].minX, agentTree_[agentTree_[node].left].maxX, agentTree_[agentTree_[node].right].minX, agentTree_[agentTree_[node].right].maxX, agent->position_.x, agent->position_.y);
-                    if (get_global_id(0) == TESTID) printf("distSqLeft=%f, distSqRight=%f, rangeSq=%f\n", distSqLeft, distSqRight, *rangeSq);
-                    if (distSqLeft < distSqRight) {
+					if (distSqLeft < distSqRight) {
                         if (distSqLeft < *rangeSq) {
                             //queryAgentTreeRecursive(agents_, agent, agentTree_, rangeSq, agentTree_[node].left);    // RECURSION
                             stackTop = push(stackTop, 1, distSqLeft, distSqRight, node); node = agentTree_[node].left; retCode = 0;
@@ -321,7 +297,7 @@ void queryAgentTreeRecursive(__global Agent* agents_, __global Agent *agent, __g
 }
 
 
-void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree)
+void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
     agent->numObstacleNeighbors_ = 0;
     float rangeSq = sqr(agent->timeHorizonObst_ * agent->maxSpeed_ + agent->radius_);
@@ -333,7 +309,7 @@ void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __glob
 
     if (agent->maxNeighbors_ > 0) {
         rangeSq = sqr(agent->neighborDist_);
-        queryAgentTreeRecursive(agents, agent, agentTree_, &rangeSq, 0, agentNeighbors, agentsForTree);
+        queryAgentTreeRecursive(agents, agent, agentTree_, &rangeSq, 0, agentNeighbors, agentsForTree, stack);
     }
 }
 
@@ -358,9 +334,6 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
         const float denominator = det(lines[orcaBias + lineNo].direction, lines[orcaBias + i].direction);
         const float numerator = det(lines[orcaBias + i].direction, lines[orcaBias + lineNo].point - lines[orcaBias + i].point);
 
-        if (get_global_id(0) == TESTID){
-            printf("point={%f, %f}, vel={%f, %f}\n", lines[orcaBias + lineNo].point.x, lines[orcaBias + lineNo].point.y, lines[orcaBias + lineNo].direction.x, lines[orcaBias + lineNo].direction.y);
-        }
         if (fabs(denominator) <= RVO_EPSILON) {
             /* Lines lineNo and i are (almost) parallel. */
             if (numerator < 0.0f) {
@@ -376,11 +349,11 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
 
         if (denominator >= 0.0f) {
             /* Line i bounds line lineNo on the right. */
-            tRight = min(tRight, t);
+            tRight = (tRight < t) ? tRight : t;
         }
         else {
             /* Line i bounds line lineNo on the left. */
-            tLeft = max(tLeft, t);
+            tLeft = (tLeft > t) ? tLeft : t;
         }
 
         if (tLeft > tRight) {
@@ -396,13 +369,10 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
         /* Optimize direction. */
         if (dot(optVelocity, lines[orcaBias + lineNo].direction) > 0.0f) {
             /* Take right extreme. */
-            if (get_global_id(0) == TESTID) printf("1\n");
             *result = lines[orcaBias + lineNo].point + tRight * lines[orcaBias + lineNo].direction;
         }
         else {
-            /* Take left extreme. */
-            if (get_global_id(0) == TESTID)
-                printf("2\n");            
+            /* Take left extreme. */  
             *result = lines[orcaBias + lineNo].point + tLeft * lines[orcaBias + lineNo].direction;
         }
     }
@@ -432,17 +402,14 @@ uint linearProgram2(const __global Line* lines, uint numLines, float radius, con
             * Optimize direction. Note that the optimization velocity is of unit
             * length in this case.
             */
-        if (get_global_id(0) == TESTID) printf("option1\n");     
         *result = optVelocity * radius;
     }
     else if (absSq(optVelocity) > sqr(radius)) {
-        /* Optimize closest point and outside circle. */
-        if (get_global_id(0) == TESTID) printf("option2\n");     
+        /* Optimize closest point and outside circle. */  
         *result = normalize(optVelocity) * radius;
     }
     else {
-        /* Optimize closest point and inside circle. */
-        if (get_global_id(0) == TESTID) printf("option3, optVelocity=%f\n", optVelocity);     
+        /* Optimize closest point and inside circle. */ 
         *result = optVelocity;
     }
 
@@ -451,19 +418,12 @@ uint linearProgram2(const __global Line* lines, uint numLines, float radius, con
         if (det(lines[orcaBias + i].direction, lines[orcaBias + i].point - *result) > 0.0f) {
             /* Result does not satisfy constraint i. Compute new optimal result. */
             const Vector2 tempResult = *result;
-            if (get_global_id(0) == TESTID)
-                    printf("ok2\n");   
             if (!linearProgram1(lines, i, radius, optVelocity, directionOpt, result, orcaBias)) {
-                if (get_global_id(0) == TESTID)
-                    printf("failure\n");     
                 *result = tempResult;
                 return i;
             }
         }
     }
-
-    if (get_global_id(0) == TESTID)
-        printf("success: result={%f, %f}\n", result->x, result->y);     
 
     return numLines;
 }
@@ -494,7 +454,7 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
                     }
                     else {
                         /* Line i and line j point in opposite direction. */
-                        line.point = 0.5f * (lines[orcaBias + i].point + lines[orcaBias + j].point);
+                        line.point = (float)0.5f * (lines[orcaBias + i].point + lines[orcaBias + j].point);
                     }
                 }
                 else {
@@ -523,22 +483,19 @@ void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines
 
 
 __kernel
-void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, float timeStep, __global AgentNeighborBuf* agentNeighbors, __global Line* orcaLines, __global Line* projLines, __global unsigned* agentsForTree)
+//void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines), //__global unsigned* restrict agentsForTree, __global StackNode* restrict stack)
+void computeNewVelocity(__global Agent* restrict agents, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines)
 {
+    #if 1
     __global Agent* agent = &agents[get_global_id(0)];
 
+    
     #ifndef FORCE_C_NEIGHBORS_KERNEL
 
-    //computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree);
+    //computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree, stack);
 
     #endif
 
-    if (get_global_id(0) == TESTID){
-        printf("Agent 0 has %d neighbors\n", agent->numAgentNeighbors_);
-        for (int i=0; i<agent->numAgentNeighbors_; ++i){
-            printf("%d: %f\n", i, agentNeighbors[i]);
-        }
-    }
 
     #ifndef FORCE_C_VELOCITY_KERNEL
 
@@ -567,8 +524,6 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
         Vector2 u;
 
         if (distSq > combinedRadiusSq) {
-            if (get_global_id(0) == TESTID)
-                printf("no collision, numOrcaLines=%u\n", agent->numOrcaLines_);  
             /* No collision. */
             const Vector2 w = relativeVelocity - invTimeHorizon * relativePosition;
             /* Vector from cutoff center to relative velocity. */
@@ -603,8 +558,6 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
             }
         }
         else {
-            if (get_global_id(0) == TESTID)
-                printf("collision, numOrcaLines=%u\n", agent->numOrcaLines_); 
             /* Collision. Project on cut-off circle of time timeStep. */
             const float invTimeStep = 1.0f / timeStep;
 
@@ -618,7 +571,7 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
             u = (combinedRadius * invTimeStep - wLength) * unitW;
         }
 
-        line.point = velocity_ + 0.5f * u;
+        line.point = velocity_ + (float)0.5f * u;
         orcaLines[orcaBias + agent->numOrcaLines_++] = line;
     }
 
@@ -628,14 +581,13 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
         linearProgram3(orcaLines, agent->numOrcaLines_, numObstLines, lineFail, agent->maxSpeed_, &agent->newVelocity_, orcaBias, projLines);
     }
 
-    if (get_global_id(0) == TESTID)
-        printf("final vel={%f, %f}\n", agent->newVelocity_.x, agent->newVelocity_.y);  
+    #endif
     #endif
 }
 
 
 // Do regular update of current velocity and position for an agent
-__kernel void update (__global Agent* agents, float timeStep)
+__kernel void update (__global Agent* restrict agents, float timeStep)
 {
     int id = get_global_id(0);
     __global Agent* agent = &agents[id];
@@ -645,11 +597,11 @@ __kernel void update (__global Agent* agents, float timeStep)
     agent->position_ += agent->velocity_ * timeStep;
 }
 
-
+/*
 // Do regular update of current velocity and position for an agent
 // plus do update in side buffer to pack positions to be reused
 // during visualization step (for example).
-__kernel void updateCustom (__global Agent* agents, float timeStep, __global float4* positionsForRendering)
+__kernel void updateCustom (__global Agent* restrict agents, float timeStep, __global float4* restrict positionsForRendering)
 {
     int id = get_global_id(0);
     __global Agent* agent = &agents[id];
@@ -661,3 +613,4 @@ __kernel void updateCustom (__global Agent* agents, float timeStep, __global flo
     // Update side vector with agent coordinates
     positionsForRendering[id].xy = agent->position_.xy;
 }
+*/
