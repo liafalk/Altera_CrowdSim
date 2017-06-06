@@ -314,7 +314,7 @@ void computeAgentNeighbors(__global Agent* agent, __global Agent* agents, __glob
 }
 
 
-bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const Vector2 optVelocity, bool directionOpt, __global Vector2 *result, uint orcaBias)
+bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const Vector2 optVelocity, bool directionOpt, Vector2 *result, uint orcaBias)
 {
     const float dotProduct = dot(lines[orcaBias + lineNo].point, lines[orcaBias + lineNo].direction);
     const float discriminant = sqr(dotProduct) + sqr(radius) - absSq(lines[orcaBias + lineNo].point);
@@ -394,7 +394,7 @@ bool linearProgram1(const __global Line* lines, uint lineNo, float radius, const
     return true;
 }
 
-uint linearProgram2(const __global Line* lines, uint numLines, float radius, const Vector2 optVelocity, bool directionOpt, __global Vector2 *result, uint orcaBias)
+uint linearProgram2(const __global Line* lines, uint numLines, float radius, const Vector2 optVelocity, bool directionOpt, Vector2 *result, uint orcaBias)
 {
     
     if (directionOpt) {
@@ -428,7 +428,7 @@ uint linearProgram2(const __global Line* lines, uint numLines, float radius, con
     return numLines;
 }
 
-void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines, uint beginLine, float radius, __global Vector2 *result, uint orcaBias, __global Line* projLines)
+void linearProgram3(const __global Line* lines, uint numLines, uint numObstLines, uint beginLine, float radius, Vector2 *result, uint orcaBias, __global Line* projLines)
 {
     float distance = 0.0f;
 
@@ -486,38 +486,24 @@ __kernel
 //void computeNewVelocity(__global Agent* restrict agents, __global AgentTreeNode* restrict agentTree_, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines), //__global unsigned* restrict agentsForTree, __global StackNode* restrict stack)
 void computeNewVelocity(__global Agent* restrict agents, float timeStep, __global AgentNeighborBuf* restrict agentNeighbors, __global Line* restrict orcaLines, __global Line* restrict projLines)
 {
-    #if 1
-    __global Agent* agent = &agents[get_global_id(0)];
-
-    
-    #ifndef FORCE_C_NEIGHBORS_KERNEL
+    Agent agent = agents[get_global_id(0)];
 
     //computeAgentNeighbors(agent, agents, agentTree_, agentNeighbors, agentsForTree, stack);
 
-    #endif
+    agent.numOrcaLines_ = 0;
 
-
-    #ifndef FORCE_C_VELOCITY_KERNEL
-
-    agent->numOrcaLines_ = 0;
-    float radius_ = agent->radius_;
-    Vector2 position_ = agent->position_;
-    Vector2 velocity_ = agent->velocity_;
-
-    const uint numObstLines = agent->numOrcaLines_;
-
-    const float invTimeHorizon = 1.0f / agent->timeHorizon_;
-    uint neighborBias = agent->maxNeighbors_*get_global_id(0);
-    uint orcaBias = (agent->maxNeighbors_ + agent->maxObstacleNeighbors_)*get_global_id(0);
+    const float invTimeHorizon = 1.0f / agent.timeHorizon_;
+    uint neighborBias = agent.maxNeighbors_*get_global_id(0);
+    uint orcaBias = (agent.maxNeighbors_ + agent.maxObstacleNeighbors_)*get_global_id(0);
 
     /* Create agent ORCA lines. */
-    for (uint i = 0; i < agent->numAgentNeighbors_; ++i) {
-        const __global Agent *const other = &agents[agentNeighbors[neighborBias+i].second];
+    for (uint i = 0; i < agent.numAgentNeighbors_; ++i) {
+        const Agent other = agents[agentNeighbors[neighborBias+i].second];
 
-        const Vector2 relativePosition = other->position_ - position_;
-        const Vector2 relativeVelocity = velocity_ - other->velocity_;
+        const Vector2 relativePosition = other.position_ - agent.position_;
+        const Vector2 relativeVelocity = agent.velocity_ - other.velocity_;
         const float distSq = absSq(relativePosition);
-        const float combinedRadius = radius_ + other->radius_;
+        const float combinedRadius = agent.radius_ + other.radius_;
         const float combinedRadiusSq = sqr(combinedRadius);
 
         Line line;
@@ -571,18 +557,18 @@ void computeNewVelocity(__global Agent* restrict agents, float timeStep, __globa
             u = (combinedRadius * invTimeStep - wLength) * unitW;
         }
 
-        line.point = velocity_ + (float)0.5f * u;
-        orcaLines[orcaBias + agent->numOrcaLines_++] = line;
+        line.point = agent.velocity_ + (float)0.5f * u;
+        orcaLines[orcaBias + agent.numOrcaLines_++] = line;
     }
 
-    uint lineFail = linearProgram2(orcaLines, agent->numOrcaLines_, agent->maxSpeed_, agent->prefVelocity_, false, &agent->newVelocity_, orcaBias);
+    uint lineFail = linearProgram2(orcaLines, agent.numOrcaLines_, agent.maxSpeed_, agent.prefVelocity_, false, &agent.newVelocity_, orcaBias);
     
-    if (lineFail < agent->numOrcaLines_) {
-        linearProgram3(orcaLines, agent->numOrcaLines_, numObstLines, lineFail, agent->maxSpeed_, &agent->newVelocity_, orcaBias, projLines);
+    if (lineFail < agent.numOrcaLines_) {
+        linearProgram3(orcaLines, agent.numOrcaLines_, 0, lineFail, agent.maxSpeed_, &agent.newVelocity_, orcaBias, projLines);
     }
 
-    #endif
-    #endif
+    // copy back the modified field
+    agents[get_global_id(0)].newVelocity_ = agent.newVelocity_;
 }
 
 
@@ -596,21 +582,3 @@ __kernel void update (__global Agent* restrict agents, float timeStep)
     agent->velocity_ = agent->newVelocity_;
     agent->position_ += agent->velocity_ * timeStep;
 }
-
-/*
-// Do regular update of current velocity and position for an agent
-// plus do update in side buffer to pack positions to be reused
-// during visualization step (for example).
-__kernel void updateCustom (__global Agent* restrict agents, float timeStep, __global float4* restrict positionsForRendering)
-{
-    int id = get_global_id(0);
-    __global Agent* agent = &agents[id];
-
-    // Update agent velocity and position
-    agent->velocity_ = agent->newVelocity_;
-    agent->position_ += agent->velocity_ * timeStep;
-
-    // Update side vector with agent coordinates
-    positionsForRendering[id].xy = agent->position_.xy;
-}
-*/

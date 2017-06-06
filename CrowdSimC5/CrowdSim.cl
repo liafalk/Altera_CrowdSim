@@ -107,7 +107,7 @@ typedef struct __AgentTreeNode
     float maxY;
     float minX;
     float minY;
-    volatile uint right;
+    uint right;
 } AgentTreeNode;
 
 inline float absSq(Vector2 vector)
@@ -120,7 +120,7 @@ inline float sqr (float x)
     return x*x;
 }
 
-typedef volatile struct __StackNode
+typedef struct __StackNode
 {
     uint retCode;
     float distSqLeft;
@@ -159,11 +159,12 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
 
         for(;;)
         {
+            AgentTreeNode currentTreeNode = agentTree_[node];
             switch(retCode)
             {
                 case 0:
-                    if (agentTree_[node].end - agentTree_[node].begin <= RVO_MAX_LEAF_SIZE) {                    
-                        for (uint i = agentTree_[node].begin; i < agentTree_[node].end; ++i) {
+                    if (currentTreeNode.end - currentTreeNode.begin <= RVO_MAX_LEAF_SIZE) {                    
+                        for (uint i = currentTreeNode.begin; i < currentTreeNode.end; ++i) {
                             const uint nextID = agents[agentsForTree[i]].id_;
                             if (agent.id_ != nextID) {
 
@@ -171,11 +172,11 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
                                 
                                 if (distSq < rangeSq) {
                                     const uint indexBias = agent.maxNeighbors_*get_global_id(0);
-
+                                    
                                     if (agent.numAgentNeighbors_ < agent.maxNeighbors_) {
                                         agentNeighbors[indexBias + agent.numAgentNeighbors_].first = distSq;
                                         agentNeighbors[indexBias + agent.numAgentNeighbors_].second = nextID;
-                                        agent.numAgentNeighbors_++;
+                                        ++agent.numAgentNeighbors_;
                                     }
 
                                     uint i = agent.numAgentNeighbors_ - 1;
@@ -195,29 +196,30 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
                                     }
 
                                 }
+                                
                             }
                         }
                         break;
                     }
                     else {
-                        const volatile uint leftNode = agentTree_[node].left;
+                        AgentTreeNode leftNode = agentTree_[currentTreeNode.left];
                         distSqLeft =
-                            sqr(max(0.0f, agentTree_[leftNode].minX - agent.position_.x)) +
-                            sqr(max(0.0f, agent.position_.x - agentTree_[leftNode].maxX)) +
-                            sqr(max(0.0f, agentTree_[leftNode].minY - agent.position_.y)) +
-                            sqr(max(0.0f, agent.position_.y - agentTree_[leftNode].maxY));
+                            sqr(max(0.0f, leftNode.minX - agent.position_.x)) +
+                            sqr(max(0.0f, agent.position_.x - leftNode.maxX)) +
+                            sqr(max(0.0f, leftNode.minY - agent.position_.y)) +
+                            sqr(max(0.0f, agent.position_.y - leftNode.maxY));
 
-                        const volatile uint rightNode = agentTree_[node].right;
+                        AgentTreeNode rightNode = agentTree_[currentTreeNode.right];
                         distSqRight =
-                            sqr(max(0.0f, agentTree_[rightNode].minX - agent.position_.x)) +
-                            sqr(max(0.0f, agent.position_.x - agentTree_[rightNode].maxX)) +
-                            sqr(max(0.0f, agentTree_[rightNode].minY - agent.position_.y)) +
-                            sqr(max(0.0f, agent.position_.y - agentTree_[rightNode].maxY));
+                            sqr(max(0.0f, rightNode.minX - agent.position_.x)) +
+                            sqr(max(0.0f, agent.position_.x - rightNode.maxX)) +
+                            sqr(max(0.0f, rightNode.minY - agent.position_.y)) +
+                            sqr(max(0.0f, agent.position_.y - rightNode.maxY));
                         
                         if (distSqLeft < distSqRight) {
                             if (distSqLeft < rangeSq) {
                                 stackTop = push(stackTop, 1, distSqLeft, distSqRight, node); 
-                                node = leftNode; 
+                                node = currentTreeNode.left; 
                                 retCode = 0;
                                 continue;
 
@@ -225,7 +227,7 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
 
                                 if (distSqRight < rangeSq) {
                                     stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
-                                    node = rightNode; 
+                                    node = currentTreeNode.right; 
                                     retCode = 0;
                                     continue;
                                 }
@@ -234,14 +236,14 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
                         else {
                             if (distSqRight < rangeSq) {
                                 stackTop = push(stackTop, 2, distSqLeft, distSqRight, node); 
-                                node = rightNode; 
+                                node = currentTreeNode.right; 
                                 retCode = 0;
                                 continue;
                 case 2:
 
                                 if (distSqLeft < rangeSq) {
                                     stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
-                                    node = leftNode; 
+                                    node = currentTreeNode.left; 
                                     retCode = 0;
                                     continue;
                                 }

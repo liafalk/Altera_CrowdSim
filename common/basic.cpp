@@ -24,7 +24,7 @@
 #include <vector>
 #include <cerrno>
 #include <cstdint>
-#include <CL/cl_gl.h>
+//#include <CL/cl_gl.h>
 
 #include "basic.hpp"
 
