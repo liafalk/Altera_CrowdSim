@@ -1,0 +1,125 @@
+<EFI_SPEC>
+
+    <FUNCTION name="host_memory_bridge_ld_32bit" module="host_memory_bridge_a0b1c2d3_ld_32bit">
+        <ATTRIBUTES>
+        <IS_STALL_FREE value="no"/>
+        <IS_FIXED_LATENCY value="no"/>
+        <EXPECTED_LATENCY value="80"/>
+        <CAPACITY value="1"/>
+        <HAS_SIDE_EFFECTS value="yes"/>
+        <ALLOW_MERGING value="no"/>
+        </ATTRIBUTES>
+        <INTERFACE>
+            <AVALON port="clock" type="clock"/>
+            <AVALON port="resetn" type="resetn"/>
+            <AVALON port="ivalid" type="ivalid"/>
+            <AVALON port="iready" type="iready"/>
+            <AVALON port="ovalid" type="ovalid"/>
+            <AVALON port="oready" type="oready"/>
+ 
+            <MEM_INPUT port="mem_pointer0" access="readwrite"/>
+            <INPUT port="ttbr0" width="32"/>
+            <INPUT port="va" width="32"/>
+            <OUTPUT port="read_data" width="128"/>  
+
+            <AVALON_MEM port="avm_port0" width="256" burstwidth="5" optype="write" buffer_location="" />
+            <AVALON_MEM port="avm_port1" width="256" burstwidth="5" optype="write" buffer_location="" />
+            <AVALON_MEM port="avm_port2" width="256" burstwidth="5" optype="write" buffer_location="" />
+        </INTERFACE>
+        <C_MODEL>
+            <FILE name="c_model.cl" />
+        </C_MODEL>
+        <REQUIREMENTS>
+            <FILE name="host_memory_bridge_32bit_ld.vhd" />
+            <FILE name="host_memory_bridge_32bit_rw.vhd" />
+            <FILE name="buswidth_adaption.vhd" />
+            <FILE name="fifo_ip_32.vhd" />
+            <FILE name="fifo_ip_1.vhd" />
+        </REQUIREMENTS>
+    </FUNCTION>
+
+
+    <FUNCTION name="host_memory_bridge_st_32bit" module="host_memory_bridge_a0b1c2d3_st_32bit">
+        <ATTRIBUTES>
+        <IS_STALL_FREE value="no"/>
+        <IS_FIXED_LATENCY value="no"/>
+        <EXPECTED_LATENCY value="80"/>
+        <CAPACITY value="1"/>
+        <HAS_SIDE_EFFECTS value="yes"/>
+        <ALLOW_MERGING value="no"/>
+        </ATTRIBUTES>
+        <INTERFACE>
+            <AVALON port="clock" type="clock"/>
+            <AVALON port="resetn" type="resetn"/>
+            <AVALON port="ivalid" type="ivalid"/>
+            <AVALON port="iready" type="iready"/>
+            <AVALON port="ovalid" type="ovalid"/>
+            <AVALON port="oready" type="oready"/>
+ 
+            <MEM_INPUT port="mem_pointer0" access="readwrite"/>
+            <INPUT port="ttbr0" width="32"/>
+            <INPUT port="va" width="32"/>
+            <INPUT port="write_data" width="32"/>
+            <OUTPUT port="ret_val" width="128"/>  
+
+            <AVALON_MEM port="avm_port0" width="256" burstwidth="5" optype="write" buffer_location="" />
+            <AVALON_MEM port="avm_port1" width="256" burstwidth="5" optype="write" buffer_location="" />
+            <AVALON_MEM port="avm_port2" width="256" burstwidth="5" optype="write" buffer_location="" />
+        </INTERFACE>
+        <C_MODEL>
+            <FILE name="c_model.cl" />
+        </C_MODEL>
+        <REQUIREMENTS>
+            <FILE name="host_memory_bridge_32bit_st.vhd" />
+            <FILE name="host_memory_bridge_32bit_rw.vhd" />
+            <FILE name="buswidth_adaption.vhd" />
+            <FILE name="fifo_ip_32.vhd" />
+            <FILE name="fifo_ip_1.vhd" />
+        </REQUIREMENTS>
+    </FUNCTION>
+
+
+
+    <FUNCTION name="host_memory_bridge_ld_512bit" module="host_memory_bridge_a0b1c2d3_ld_512bit">
+        <ATTRIBUTES>
+        <IS_STALL_FREE value="no"/>
+        <IS_FIXED_LATENCY value="no"/>
+        <EXPECTED_LATENCY value="1280"/>
+        <CAPACITY value="1"/>
+        <HAS_SIDE_EFFECTS value="yes"/>
+        <ALLOW_MERGING value="no"/>
+        </ATTRIBUTES>
+        <INTERFACE>
+            <AVALON port="clock" type="clock"/>
+            <AVALON port="resetn" type="resetn"/>
+            <AVALON port="ivalid" type="ivalid"/>
+            <AVALON port="iready" type="iready"/>
+            <AVALON port="ovalid" type="ovalid"/>
+            <AVALON port="oready" type="oready"/>
+ 
+            <MEM_INPUT port="mem_pointer0" access="readwrite"/>
+            <INPUT port="ttbr0" width="32"/>
+            <INPUT port="va" width="32"/>
+            <OUTPUT port="read_data" width="512"/>  
+
+            <AVALON_MEM port="avm_port0" width="256" burstwidth="5" optype="write" buffer_location="" />
+            <AVALON_MEM port="avm_port1" width="256" burstwidth="5" optype="write" buffer_location="" />
+            <AVALON_MEM port="avm_port2" width="256" burstwidth="5" optype="write" buffer_location="" />
+        </INTERFACE>
+        <C_MODEL>
+            <FILE name="c_model.cl" />
+        </C_MODEL>
+        <REQUIREMENTS>
+            <FILE name="host_memory_bridge_512bit_ld.vhd" />
+            <FILE name="host_memory_bridge_512bit_rw.vhd" />
+            <FILE name="buswidth_adaption.vhd" />
+            <FILE name="fifo_ip_32.vhd" />
+            <FILE name="fifo_ip_256.vhd" />
+            <FILE name="fifo_ip_512.vhd" />
+            <FILE name="fifo_ip_1.vhd" />
+        </REQUIREMENTS>
+    </FUNCTION>
+
+
+
+</EFI_SPEC>
