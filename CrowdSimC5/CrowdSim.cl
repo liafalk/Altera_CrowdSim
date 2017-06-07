@@ -30,44 +30,27 @@ typedef float2 Vector2;
 
 struct __Agent;
 
-#pragma pack(4)
-typedef struct __AgentNeighborBuf
+typedef struct __attribute__((packed)) __attribute__((aligned(8))) __AgentNeighborBuf
 {
     float first;
     uint second;
 } AgentNeighborBuf;
 
-/*
-#pragma pack(4)
-typedef struct __Agent {
-    //__global AgentNeighbor* agentNeighbors_;
-    //long spacer1;
+
+typedef struct __attribute__((packed)) __attribute__((aligned(32))) __Agent {
     uint numAgentNeighbors_; // number of filled elements in agentNeighbors
     uint maxNeighbors_;
-    float maxSpeed_;
-    float neighborDist_;
-    //Vector2 newVelocity_;
-    //__global ObstacleNeighbor* obstacleNeighbors_;
-    //long spacer2;
-    uint numObstacleNeighbors_; // number of filled elements in agentNeighbors
-    //uint maxObstacleNeighbors_;  // number of allocated positions in obstacleNeighbors, can be increased dynamically
-    //__global Line* orcaLines_;
-    //long spacer3;
-    //uint numOrcaLines_;
-    //__global Line* projLines_;   // used as a scratch buffer for calling linearProgram3
-    //long spacer4;
+    //float maxSpeed_;
+    //float neighborDist_;
     Vector2 position_;
-    //Vector2 prefVelocity_;
-    float radius_;
-    //__global void *sim_;
-    //long spacer5;
-    //float timeHorizon_;
-    float timeHorizonObst_;
+    //float radius_;
+    //float timeHorizonObst_;
     Vector2 velocity_;
     uint id_;
 } Agent;
-*/
 
+
+/*
 #pragma pack(4)
 typedef struct __Agent {
     //__global AgentNeighbor* agentNeighbors_;
@@ -96,9 +79,8 @@ typedef struct __Agent {
     Vector2 velocity_;
     uint id_;
 } Agent;
-
-#pragma pack(4)
-typedef struct __AgentTreeNode
+*/
+typedef struct __attribute__((packed)) __attribute__((aligned(32))) __AgentTreeNode
 {
     uint begin;
     uint end;
@@ -142,14 +124,14 @@ __kernel
 void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
     Agent agent = agents[get_global_id(0)];
+    //agent.numObstacleNeighbors_ = 0;
+    //float rangeSq = sqr(agent.timeHorizonObst_ * agent.maxSpeed_ + agent.radius_);
 
-    agent.numObstacleNeighbors_ = 0;
-    float rangeSq = sqr(agent.timeHorizonObst_ * agent.maxSpeed_ + agent.radius_);
-    
     agent.numAgentNeighbors_ = 0;
 
     if (agent.maxNeighbors_ > 0) {
-        rangeSq = sqr(agent.neighborDist_);
+        //rangeSq = sqr(agent.neighborDist_);
+        float rangeSq = 225.0f;
         uint node = 0;
         __global StackNode* stackTop = &stack[get_global_id(0)];
         uint retCode = 0;
@@ -159,12 +141,13 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
 
         for(;;)
         {
-            AgentTreeNode currentTreeNode = agentTree_[node];
+            const AgentTreeNode currentTreeNode = agentTree_[node];
             switch(retCode)
             {
                 case 0:
                     if (currentTreeNode.end - currentTreeNode.begin <= RVO_MAX_LEAF_SIZE) {                    
                         for (uint i = currentTreeNode.begin; i < currentTreeNode.end; ++i) {
+                            //const uint kdKey = ;
                             const uint nextID = agents[agentsForTree[i]].id_;
                             if (agent.id_ != nextID) {
 
@@ -174,6 +157,7 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
                                     const uint indexBias = agent.maxNeighbors_*get_global_id(0);
                                     
                                     if (agent.numAgentNeighbors_ < agent.maxNeighbors_) {
+                                        
                                         agentNeighbors[indexBias + agent.numAgentNeighbors_].first = distSq;
                                         agentNeighbors[indexBias + agent.numAgentNeighbors_].second = nextID;
                                         ++agent.numAgentNeighbors_;
@@ -190,11 +174,8 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
                                     agentNeighbors[indexBias+i].second = nextID;
 
                                     if (agent.numAgentNeighbors_ == agent.maxNeighbors_) {
-                                        // TODO FIX: assigning rangeSq to any value crashes the compiler ??
                                         rangeSq = agentNeighbors[indexBias + agent.numAgentNeighbors_ - 1].first;
-                                        //rangeSq = 2.0f;
                                     }
-
                                 }
                                 
                             }
