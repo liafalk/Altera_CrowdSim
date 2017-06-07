@@ -382,7 +382,7 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentsForTreeBuffer\n";
 
-                stackBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, sizeof(StackNode)*numAgents, NULL, &err);
+                stackBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, sizeof(StackNode)*MAX_KDTREE_DEPTH*numAgents, NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created stackBuffer\n";
 

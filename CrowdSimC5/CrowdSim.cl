@@ -33,20 +33,15 @@ struct __Agent;
 typedef struct __attribute__((packed)) __attribute__((aligned(8))) __AgentNeighborBuf
 {
     float first;
-    uint second;
+    ushort second;
 } AgentNeighborBuf;
 
 
 typedef struct __attribute__((packed)) __attribute__((aligned(32))) __Agent {
-    uint numAgentNeighbors_; // number of filled elements in agentNeighbors
-    uint maxNeighbors_;
-    //float maxSpeed_;
-    //float neighborDist_;
+    uchar numAgentNeighbors_;
     Vector2 position_;
-    //float radius_;
-    //float timeHorizonObst_;
     Vector2 velocity_;
-    uint id_;
+    ushort id_;
 } Agent;
 
 
@@ -104,13 +99,13 @@ inline float sqr (float x)
 
 typedef struct __StackNode
 {
-    uint retCode;
+    uchar retCode;
     float distSqLeft;
     float distSqRight;
-    uint node;
+    ushort node;
 } StackNode;
 
-__global StackNode* push (__global StackNode* stackNode, uint retCode, float distSqLeft, float distSqRight, uint node)
+__global StackNode* push (__global StackNode* stackNode, uchar retCode, float distSqLeft, float distSqRight, ushort node)
 {
     stackNode->retCode = retCode;
     stackNode->distSqLeft = distSqLeft;
@@ -119,7 +114,8 @@ __global StackNode* push (__global StackNode* stackNode, uint retCode, float dis
     return stackNode + 1;
 }
 
-//__attribute__((reqd_work_group_size(64,1,1)))
+//__attribute__((num_simd_work_items(1)))
+//__attribute__((reqd_work_group_size(16,1,1)))
 __kernel
 void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
@@ -127,125 +123,123 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
     //agent.numObstacleNeighbors_ = 0;
     //float rangeSq = sqr(agent.timeHorizonObst_ * agent.maxSpeed_ + agent.radius_);
 
-    agent.numAgentNeighbors_ = 0;
+    //agent.numAgentNeighbors_ = 0;
+    //rangeSq = sqr(agent.neighborDist_);
+    float rangeSq = 15.0f;
+    ushort node = 0;
+    __global StackNode* stackTop = &stack[get_global_id(0)*MAX_KDTREE_DEPTH];
+    uchar retCode = 0;
 
-    if (agent.maxNeighbors_ > 0) {
-        //rangeSq = sqr(agent.neighborDist_);
-        float rangeSq = 225.0f;
-        uint node = 0;
-        __global StackNode* stackTop = &stack[get_global_id(0)];
-        uint retCode = 0;
+    float distSqLeft;
+    float distSqRight;
 
-        float distSqLeft;
-        float distSqRight;
-
-        for(;;)
+    for(;;)
+    {
+        const AgentTreeNode currentTreeNode = agentTree_[node];
+        switch(retCode)
         {
-            const AgentTreeNode currentTreeNode = agentTree_[node];
-            switch(retCode)
-            {
-                case 0:
-                    if (currentTreeNode.end - currentTreeNode.begin <= RVO_MAX_LEAF_SIZE) {                    
-                        for (uint i = currentTreeNode.begin; i < currentTreeNode.end; ++i) {
-                            //const uint kdKey = ;
-                            const uint nextID = agents[agentsForTree[i]].id_;
-                            if (agent.id_ != nextID) {
+            case 0:
+                if (currentTreeNode.end - currentTreeNode.begin <= RVO_MAX_LEAF_SIZE) {                    
+                    for (uint i = currentTreeNode.begin; i < currentTreeNode.end; ++i) {
+                        //const uint kdKey = ;
+                        //const uint nextID = agents[agentsForTree[i]].id_;
+                        Agent nearAgent = agents[agentsForTree[i]];
+                        if (agent.id_ != nearAgent.id_) {
 
-                                const float distSq = absSq(agent.position_ - agents[agentsForTree[i]].position_);
+                            const float distSq = length(agent.position_ - nearAgent.position_);
+                            
+                            if (distSq < rangeSq) {
+                                const ushort indexBias = 10*get_global_id(0);
                                 
-                                if (distSq < rangeSq) {
-                                    const uint indexBias = agent.maxNeighbors_*get_global_id(0);
+                                if (agent.numAgentNeighbors_ < 10) {
                                     
-                                    if (agent.numAgentNeighbors_ < agent.maxNeighbors_) {
-                                        
-                                        agentNeighbors[indexBias + agent.numAgentNeighbors_].first = distSq;
-                                        agentNeighbors[indexBias + agent.numAgentNeighbors_].second = nextID;
-                                        ++agent.numAgentNeighbors_;
-                                    }
-
-                                    uint i = agent.numAgentNeighbors_ - 1;
-
-                                    while (i != 0 && distSq < agentNeighbors[indexBias + i - 1].first) {
-                                        agentNeighbors[indexBias+i] = agentNeighbors[indexBias + i - 1];
-                                        --i;
-                                    }
-
-                                    agentNeighbors[indexBias+i].first = distSq;
-                                    agentNeighbors[indexBias+i].second = nextID;
-
-                                    if (agent.numAgentNeighbors_ == agent.maxNeighbors_) {
-                                        rangeSq = agentNeighbors[indexBias + agent.numAgentNeighbors_ - 1].first;
-                                    }
+                                    agentNeighbors[indexBias + agent.numAgentNeighbors_].first = distSq;
+                                    agentNeighbors[indexBias + agent.numAgentNeighbors_].second = nearAgent.id_;
+                                    ++agent.numAgentNeighbors_;
                                 }
-                                
+
+                                uchar i = agent.numAgentNeighbors_ - 1;
+
+                                while (i != 0 && distSq < agentNeighbors[indexBias + i - 1].first) {
+                                    agentNeighbors[indexBias+i] = agentNeighbors[indexBias + i - 1];
+                                    --i;
+                                }
+
+                                agentNeighbors[indexBias+i].first = distSq;
+                                agentNeighbors[indexBias+i].second = nearAgent.id_;
+
+                                if (agent.numAgentNeighbors_ == 10) {
+                                    rangeSq = agentNeighbors[indexBias + agent.numAgentNeighbors_ - 1].first;
+                                }
                             }
+                            
                         }
-                        break;
                     }
-                    else {
-                        AgentTreeNode leftNode = agentTree_[currentTreeNode.left];
-                        distSqLeft =
-                            sqr(max(0.0f, leftNode.minX - agent.position_.x)) +
-                            sqr(max(0.0f, agent.position_.x - leftNode.maxX)) +
-                            sqr(max(0.0f, leftNode.minY - agent.position_.y)) +
-                            sqr(max(0.0f, agent.position_.y - leftNode.maxY));
+                    break;
+                }
+                else {
+                    AgentTreeNode leftNode = agentTree_[currentTreeNode.left];
+                    distSqLeft =
+                        max(0.0f, leftNode.minX - agent.position_.x) +
+                        max(0.0f, agent.position_.x - leftNode.maxX) +
+                        max(0.0f, leftNode.minY - agent.position_.y) +
+                        max(0.0f, agent.position_.y - leftNode.maxY);
 
-                        AgentTreeNode rightNode = agentTree_[currentTreeNode.right];
-                        distSqRight =
-                            sqr(max(0.0f, rightNode.minX - agent.position_.x)) +
-                            sqr(max(0.0f, agent.position_.x - rightNode.maxX)) +
-                            sqr(max(0.0f, rightNode.minY - agent.position_.y)) +
-                            sqr(max(0.0f, agent.position_.y - rightNode.maxY));
-                        
-                        if (distSqLeft < distSqRight) {
-                            if (distSqLeft < rangeSq) {
-                                stackTop = push(stackTop, 1, distSqLeft, distSqRight, node); 
-                                node = currentTreeNode.left; 
-                                retCode = 0;
-                                continue;
+                    AgentTreeNode rightNode = agentTree_[currentTreeNode.right];
+                    distSqRight =
+                        max(0.0f, rightNode.minX - agent.position_.x) +
+                        max(0.0f, agent.position_.x - rightNode.maxX) +
+                        max(0.0f, rightNode.minY - agent.position_.y) +
+                        max(0.0f, agent.position_.y - rightNode.maxY);
+                    
+                    if (distSqLeft < distSqRight) {
+                        if (distSqLeft < rangeSq) {
+                            stackTop = push(stackTop, 1, distSqLeft, distSqRight, node); 
+                            node = currentTreeNode.left; 
+                            retCode = 0;
+                            continue;
 
-                case 1:
+            case 1:
 
-                                if (distSqRight < rangeSq) {
-                                    stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
-                                    node = currentTreeNode.right; 
-                                    retCode = 0;
-                                    continue;
-                                }
-                            }
-                        }
-                        else {
                             if (distSqRight < rangeSq) {
-                                stackTop = push(stackTop, 2, distSqLeft, distSqRight, node); 
+                                stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
                                 node = currentTreeNode.right; 
                                 retCode = 0;
                                 continue;
-                case 2:
-
-                                if (distSqLeft < rangeSq) {
-                                    stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
-                                    node = currentTreeNode.left; 
-                                    retCode = 0;
-                                    continue;
-                                }
                             }
                         }
                     }
-                case 3: break;
-            }
+                    else {
+                        if (distSqRight < rangeSq) {
+                            stackTop = push(stackTop, 2, distSqLeft, distSqRight, node); 
+                            node = currentTreeNode.right; 
+                            retCode = 0;
+                            continue;
+            case 2:
 
-            if(&stack[0] == stackTop)
-            {
-                break;
-            }
-
-            stackTop--;
-
-            retCode = stackTop->retCode;
-            distSqLeft = stackTop->distSqLeft;
-            distSqRight = stackTop->distSqRight;
-            node = stackTop->node;
+                            if (distSqLeft < rangeSq) {
+                                stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
+                                node = currentTreeNode.left; 
+                                retCode = 0;
+                                continue;
+                            }
+                        }
+                    }
+                }
+            case 3: break;
         }
+
+        if(&stack[0] == stackTop)
+        {
+            break;
+        }
+
+        stackTop--;
+
+        retCode = stackTop->retCode;
+        distSqLeft = stackTop->distSqLeft;
+        distSqRight = stackTop->distSqRight;
+        node = stackTop->node;
     }
 
     // copy back the modified field
