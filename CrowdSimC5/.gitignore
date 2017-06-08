@@ -15,3 +15,5 @@ CrowdSim_CL
 .idea/
 cmake-build-debug/
 CMakeFiles/
+CrowdSim/
+bin/
