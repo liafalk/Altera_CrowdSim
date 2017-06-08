@@ -15,7 +15,7 @@ SET(CMAKE_SYSTEM_VERSION 1)
  
 # specify the cross compiler
 SET(CMAKE_C_COMPILER arm-linux-gnueabihf-gcc)
-SET(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++)
+SET(CMAKE_CXX_COMPILER arm-linux-gnueabihf-g++-4.8)
 
  
 

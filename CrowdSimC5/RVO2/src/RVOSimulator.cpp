@@ -458,7 +458,8 @@ namespace RVO {
             std::cout << "[ INFO ] Read successful, copying to local data structures\n";
             unsigned maxNeighbors = defaultAgent_->maxNeighbors_;
             for(int i=0; i<agents_.size(); ++i){
-                *agents_[i] = primitiveAgents[i];
+                agents_[i]->numAgentNeighbors_ = primitiveAgents[i].numAgentNeighbors_;
+
                     for(int j=0; j<agents_[i]->numAgentNeighbors_; ++j){
                         agents_[i]->agentNeighbors_[j].first = primitiveAgentNeighbor[i*maxNeighbors + j].first;
                         agents_[i]->agentNeighbors_[j].second = agents_[primitiveAgentNeighbor[i*maxNeighbors + j].second];
