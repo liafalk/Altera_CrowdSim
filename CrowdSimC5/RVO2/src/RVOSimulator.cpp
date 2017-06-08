@@ -321,7 +321,7 @@ namespace RVO {
         unsigned numAgents = static_cast<unsigned>(agents_.size());
         int err = 0;
 
-        err = posix_memalign((void**)&primitiveAgents, 64, numAgents*sizeof(Agent));
+        err = posix_memalign((void**)&primitiveAgents, 64, numAgents*sizeof(primAgent));
         printf("primitiveAgents created (%d).\n", err);
 
         err = posix_memalign((void**)&primitiveAgentsForTree, 64, numAgents*sizeof(unsigned));
@@ -346,9 +346,17 @@ namespace RVO {
         if(oclobjects_ && cmdparser_ && !cmdparser_->no_opencl.getValue())
         {
 
-            size_t newAgentsBufferSize = numAgents * sizeof(Agent);
+            size_t newAgentsBufferSize = numAgents * sizeof(primAgent);
             cl_int err = CL_SUCCESS;
             
+            for(int i=0; i<numAgents; ++i){
+                primitiveAgents[i].numAgentNeighbors_ = (cl_uchar) 0;
+                primitiveAgents[i].position_ = {agents_[i]->position_.x(), agents_[i]->position_.y()};
+                primitiveAgents[i].velocity_ = {agents_[i]->velocity_.x(), agents_[i]->velocity_.y()};
+                primitiveAgents[i].id_ = (cl_ushort) agents_[i]->id_;
+                primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
+            }
+
             if(newAgentsBufferSize > agentsBufferSize_)
             {
                 // As the library doesn't have ability to delete agents, we need to update OpenCL buffer only when
@@ -360,12 +368,6 @@ namespace RVO {
                     std::cout << "Buffer size = " << newAgentsBufferSize << "\n";
                 }
 
-                for(int i=0; i<numAgents; ++i){
-                    // implementation with malloc (already sized array)
-                    primitiveAgents[i] = *agents_[i];
-                    primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
-                }
-                
                 agentsBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, newAgentsBufferSize, &primitiveAgents[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentsBuffer of size " << newAgentsBufferSize << "\n";
@@ -390,12 +392,7 @@ namespace RVO {
                 agentsBufferSize_ = newAgentsBufferSize;
             }
             else{ // if not, we need to update the kdTree and neighbours!
-
-                for(int i=0; i<numAgents; ++i){
-                    primitiveAgents[i] = *agents_[i];
-                    //primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
-                }
-                
+            
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsBuffer, CL_TRUE, 0, newAgentsBufferSize, &primitiveAgents[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);       
                 

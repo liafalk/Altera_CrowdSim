@@ -104,11 +104,10 @@ namespace RVO {
         Vector2 direction;
     };
 
-#pragma pack(4)
-    struct AgentNeighborBuf
+    typedef struct __attribute__((packed)) __attribute__((aligned(8))) __AgentNeighborBuf
     {
-        cl_float first;
-        cl_uint second;
+        float first;
+        ushort second;
 
         AgentNeighborBuf () {}
 
@@ -117,33 +116,21 @@ namespace RVO {
             second(pair.second)
         {
         }
-    };
+    } AgentNeighborBuf;
 
     typedef struct __StackNode
     {
-        uint retCode;
+        uchar retCode;
         float distSqLeft;
         float distSqRight;
-        uint node;
+        ushort node;
     } StackNode;
 
-#pragma pack(4)
-    typedef struct __primAgent {
-        cl_uint numAgentNeighbors_;
-        cl_uint maxNeighbors_;
-        cl_float maxSpeed_;
-        cl_float neighborDist_;
-        cl_float2 newVelocity_;
-        cl_uint numObstacleNeighbors_; // number of filled elements in agentNeighbors
-        cl_uint maxObstacleNeighbors_;  // number of allocated positions in obstacleNeighbors, can be increased dynamically
-        cl_uint numOrcaLines_;
+    typedef struct __attribute__((packed)) __attribute__((aligned(32))) __primAgent {
+        cl_uchar numAgentNeighbors_;
         cl_float2 position_;
-        cl_float2 prefVelocity_;
-        cl_float radius_;
-        cl_float timeHorizon_;
-        cl_float timeHorizonObst_;
         cl_float2 velocity_;
-        cl_uint id_;
+        cl_ushort id_;
     } primAgent;
 
     struct Agent;
@@ -672,13 +659,14 @@ namespace RVO {
         //std::vector<AgentNeighborBuf> primitiveAgentNeighbor;
         //std::vector<Line> primitiveOrcaLines;
 
-        Agent* primitiveAgents;
+        //Agent* primitiveAgents;
+        primAgent* primitiveAgents
         unsigned* primitiveAgentsForTree;
         AgentNeighborBuf* primitiveAgentNeighbor;
-        Line* primitiveOrcaLines;
+        //Line* primitiveOrcaLines;
 
         unsigned primitiveAgentNeighbor_size;
-        unsigned primitiveOrcaLines_size;
+        //unsigned primitiveOrcaLines_size;
 
         Agent *defaultAgent_;
         float globalTime_;
