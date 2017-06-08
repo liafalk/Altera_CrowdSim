@@ -37,7 +37,7 @@ typedef struct __attribute__((packed)) __attribute__((aligned(8))) __AgentNeighb
 } AgentNeighborBuf;
 
 
-typedef struct __attribute__((packed)) __attribute__((aligned(32))) __Agent {
+typedef volatile struct __attribute__((packed)) __attribute__((aligned(32))) __Agent {
     uchar numAgentNeighbors_;
     Vector2 position_;
     Vector2 velocity_;
@@ -115,7 +115,7 @@ __global StackNode* push (__global StackNode* stackNode, uchar retCode, float di
 }
 
 //__attribute__((num_simd_work_items(1)))
-//__attribute__((reqd_work_group_size(16,1,1)))
+//__attribute__((max_work_group_size(64)))
 __kernel
 void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
@@ -128,6 +128,9 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
     float rangeSq = 15.0f;
     ushort node = 0;
     __global StackNode* stackTop = &stack[get_global_id(0)*MAX_KDTREE_DEPTH];
+    //StackNode stack[MAX_KDTREE_DEPTH];
+    //StackNode* stackTop = &stack[0];
+
     uchar retCode = 0;
 
     float distSqLeft;
@@ -136,7 +139,9 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
     for(;;)
     {
         const AgentTreeNode currentTreeNode = agentTree_[node];
-        switch(retCode)
+        ushort nodeStored;
+        uchar retcodeStored = 0;
+        switch(retCode) 
         {
             case 0:
                 if (currentTreeNode.end - currentTreeNode.begin <= RVO_MAX_LEAF_SIZE) {                    
@@ -194,39 +199,51 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
                     
                     if (distSqLeft < distSqRight) {
                         if (distSqLeft < rangeSq) {
-                            stackTop = push(stackTop, 1, distSqLeft, distSqRight, node); 
+                            //stackTop = push(stackTop, 1, distSqLeft, distSqRight, node); 
+                            nodeStored = node;
+                            retcodeStored = 1;
                             node = currentTreeNode.left; 
                             retCode = 0;
-                            continue;
+                            break;
 
             case 1:
 
                             if (distSqRight < rangeSq) {
-                                stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
+                                //stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
+                                nodeStored = node;
+                                retcodeStored = 3;
                                 node = currentTreeNode.right; 
                                 retCode = 0;
-                                continue;
+                                break;
                             }
                         }
                     }
                     else {
                         if (distSqRight < rangeSq) {
-                            stackTop = push(stackTop, 2, distSqLeft, distSqRight, node); 
+                            //stackTop = push(stackTop, 2, distSqLeft, distSqRight, node); 
+                            nodeStored = node;
+                            retcodeStored = 2;
                             node = currentTreeNode.right; 
                             retCode = 0;
-                            continue;
+                            break;
             case 2:
 
                             if (distSqLeft < rangeSq) {
-                                stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
+                                //stackTop = push(stackTop, 3, distSqLeft, distSqRight, node);
+                                nodeStored = node;
+                                retcodeStored = 3; 
                                 node = currentTreeNode.left; 
                                 retCode = 0;
-                                continue;
+                                break;
                             }
                         }
                     }
                 }
             case 3: break;
+        }
+        if (retcodeStored != 0){
+            stackTop = push(stackTop, retcodeStored, distSqLeft, distSqRight, nodeStored);
+            continue;
         }
 
         if(&stack[0] == stackTop)
