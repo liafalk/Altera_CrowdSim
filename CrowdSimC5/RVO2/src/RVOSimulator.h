@@ -76,6 +76,9 @@
 
 #include "../../src/cmdoptions.hpp"
 
+// header file with functions related to custom SVM
+#include "../../../common/svm_utils/svm_utils.hpp"
+
 #pragma pack(push)
 
 namespace RVO {
@@ -686,6 +689,9 @@ namespace RVO {
         cl_mem projBuffer;
         cl_mem agentsForTreeBuffer;
         cl_mem stackBuffer;
+
+        address_t ttbr0_value; // address of Linux page table
+        cl_mem dummy_p0;       // create dummy pointer to trick AOCL to support custom SVM code
         
         friend struct Agent;
         //friend struct AgentNeighbor;

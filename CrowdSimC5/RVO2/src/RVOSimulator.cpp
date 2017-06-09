@@ -67,6 +67,7 @@
 
 #include <iostream>
 
+
 namespace RVO {
     RVOSimulator::RVOSimulator(OpenCLBasic* oclobjects, const CmdParserCrowdSim* cmdparser, cl_mem customUpdateBuffer) :
         defaultAgent_(NULL),
@@ -130,6 +131,10 @@ namespace RVO {
 
             kernelComputeNewVelocity_ = (*openCLProgram_)["computeNewVelocity"];
             //kernelUpdate_ = (*openCLProgram_)[customUpdateBuffer_ ? "updateCustom" : "update"];
+
+            // Custom SVM setup
+            enable_f2h_acp(true);       // set flag to enable ACP on Cyclone V
+            ttbr0_value = get_ttbr0();  // get address of Linux page table 
         }
 
         kdTree_ = new KdTree(this);
@@ -388,6 +393,11 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created stackBuffer\n";
 
+                // create dummy pointer to trick AOCL to support custom SVM code
+                dummy_p0 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(int), NULL, &err);
+                SAMPLE_CHECK_ERRORS(err);
+                std::cout << "[ INFO ] Created dummy_p0\n";
+
                 // Save the new buffer size value
                 agentsBufferSize_ = newAgentsBufferSize;
             }
@@ -410,13 +420,23 @@ namespace RVO {
             err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(cl_mem), &treeBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(cl_mem), &agentNeighborBuffer);
+            address_t svm_treeBuffer_ptr = (address_t)&kdTree_->agentTree_[0];
+            err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(cl_uint), (void*)svm_treeBuffer_ptr);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(cl_mem), &agentsForTreeBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(cl_mem), &agentNeighborBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 4, sizeof(cl_mem), &stackBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 4, sizeof(cl_mem), &agentsForTreeBuffer);
+            SAMPLE_CHECK_ERRORS(err);
+
+            err = clSetKernelArg(kernelComputeNewVelocity_, 5, sizeof(cl_mem), &stackBuffer);
+            SAMPLE_CHECK_ERRORS(err);
+
+            err = clSetKernelArg(kernelComputeNewVelocity_, 6, sizeof(cl_uint), &ttbr0_value);
+            SAMPLE_CHECK_ERRORS(err);
+
+            err = clSetKernelArg(kernelComputeNewVelocity_, 7, sizeof(cl_mem), &dummy_p0);
             SAMPLE_CHECK_ERRORS(err);
 
             size_t global_size = agents_.size();
