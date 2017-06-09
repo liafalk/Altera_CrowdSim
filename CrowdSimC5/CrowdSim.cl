@@ -20,6 +20,7 @@
 
 
 #include "Constants.h"
+#include "../common/rtl_src/host_memory_bridge.h"
 
 typedef float2 Vector2;
 
@@ -114,10 +115,36 @@ __global StackNode* push (__global StackNode* stackNode, uchar retCode, float di
     return stackNode + 1;
 }
 
+
+
+AgentTreeNode vector_2_AgentTreeNode(uint16 v) {
+    AgentTreeNode tn;
+
+    tn.begin        = v.s0;
+    tn.end          = v.s1;
+    tn.left         = v.s2;
+    tn.maxX            = (float)v.s3;
+    tn.maxY            = (float)v.s4;
+    tn.minX            = (float)v.s5;
+    tn.minY            = (float)v.s6;
+    tn.right           = v.s7;
+
+    return tn;
+}
+
+
 //__attribute__((num_simd_work_items(1)))
 //__attribute__((max_work_group_size(64)))
 __kernel
-void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
+void computeNewVelocity(__global Agent* agents,
+                        __global AgentTreeNode* agentTree_,
+                        svm_pointer_t svm_agentTree_,               // the svm version of the above pointer
+                        __global AgentNeighborBuf* agentNeighbors,
+                        __global unsigned* agentsForTree,
+                        __global StackNode* stack,
+                        svm_pointer_t ttbr0,                        // address of the page table entry
+                        __global int *restrict dummy_p0             // dummy pointer used to trick AOCL to support custom SVM code
+                    )
 {
     Agent agent = agents[get_global_id(0)];
     //agent.numObstacleNeighbors_ = 0;
@@ -139,6 +166,11 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
     for(;;)
     {
         const AgentTreeNode currentTreeNode = agentTree_[node];
+        
+        // svm read access (reading one tree node at pointer svm_agentTree_)
+        uint16 recv = host_memory_bridge_ld_512bit (dummy_p0, ttbr0, svm_agentTree_);
+        const AgentTreeNode svm_currentTreeNode = vector_2_AgentTreeNode(recv);
+
         ushort nodeStored;
         uchar retcodeStored = 0;
         switch(retCode) 
