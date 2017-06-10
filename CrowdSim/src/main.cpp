@@ -18,8 +18,6 @@
 // Intel Corporation is the author of the Materials, and requests that all
 // problem reports or change requests be submitted to it directly
 
-// for graphics
-#include "bitmap_image.hpp"
 
 #include <stdio.h>
 

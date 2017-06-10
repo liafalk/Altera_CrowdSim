@@ -18,7 +18,7 @@
 // Intel Corporation is the author of the Materials, and requests that all
 // problem reports or change requests be submitted to it directly
 
-#include "bitmap_image.hpp"
+#include "pngwriter.h"
 #include <stdio.h>
 #include <cstdio>
 #include <iostream>
@@ -373,7 +373,7 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
     }
     #endif
 
-    double startSimTime = time_stamp();
+    
 
     setPreferredVelocities(crowd_sim);
 
@@ -391,7 +391,24 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
     
     #define NOSVM
     //crowd_sim->doStep();
+
+    double startSimTime = time_stamp();
     crowd_sim->doStep_NoSVM();
+    double endSimTime = time_stamp();
+    *pKernelTime = endSimTime - startSimTime;
+
+    pngwriter canvas(400,400,1.0, std::string("output/" + std::to_string(iteration) + ".png").c_str());
+
+    for (int i=0; i<crowd_sim->getNumAgents(); ++i){
+        canvas.filledcircle(crowd_sim->getAgentPosition(i).x()+200, crowd_sim->getAgentPosition(i).y()+200, 1,65535,0,0);
+        #ifdef DEBUG_PRINT_ALL_AGENTS
+        int TESTID = i;
+        printf("Agent %d's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", TESTID, crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), 
+            crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
+        #endif
+    }
+    canvas.close();
+
 
     bool ret = !reachedGoal(crowd_sim);
 
@@ -411,9 +428,6 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
         }
     }
     #endif
-
-    double endSimTime = time_stamp();
-    *pKernelTime = endSimTime - startSimTime;
 
     return ret;
 }

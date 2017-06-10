@@ -67,6 +67,8 @@
 
 #include <iostream>
 
+// header file with functions related to custom SVM
+#include "../../../common/svm_utils/svm_utils.hpp"
 
 namespace RVO {
     RVOSimulator::RVOSimulator(OpenCLBasic* oclobjects, const CmdParserCrowdSim* cmdparser, cl_mem customUpdateBuffer) :
@@ -133,7 +135,7 @@ namespace RVO {
             //kernelUpdate_ = (*openCLProgram_)[customUpdateBuffer_ ? "updateCustom" : "update"];
 
             // Custom SVM setup
-            enable_f2h_acp(true);       // set flag to enable ACP on Cyclone V
+            //enable_f2h_acp(true);       // set flag to enable ACP on Cyclone V
             ttbr0_value = get_ttbr0();  // get address of Linux page table 
         }
 
@@ -413,15 +415,16 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
             }
 
-            std::cout << "[ INFO ] Assigning kernel argumetns\n";
+            std::cout << "[ INFO ] Assigning kernel arguments\n";
             err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
             
             err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(cl_mem), &treeBuffer);
             SAMPLE_CHECK_ERRORS(err);
-
-            address_t svm_treeBuffer_ptr = (address_t)&kdTree_->agentTree_[0];
-            err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(cl_uint), (void*)svm_treeBuffer_ptr);
+         
+            cl_uint svm_treeBuffer_ptr = (cl_uint)&kdTree_->agentTree_[0];
+            printf("Setting treeBuffer_ptr = %p (size=%dB)\n", (void*)svm_treeBuffer_ptr, sizeof(svm_treeBuffer_ptr));
+            err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(cl_uint), (void*)&svm_treeBuffer_ptr);
             SAMPLE_CHECK_ERRORS(err);
 
             err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(cl_mem), &agentNeighborBuffer);

@@ -70,12 +70,11 @@ static volatile uint32_t *bus_p_r = NULL;
 */
 void *getvaddr(off_t phys_addr)
 {
-
+    printf("[INFO] Starting getvaddr()\n");
     void *virtual_base;
     int memfd;
 
     void *mapped_dev_base;   
-
     memfd = open("/dev/mem", O_RDWR|O_SYNC); //to open this the program needs to be run as root
     if (memfd < 0) {
         printf("Can't open /dev/mem.\n");
@@ -85,15 +84,14 @@ void *getvaddr(off_t phys_addr)
 
     // Map one page of memory into user space such that the device is in that page, but it may not
     // be at the start of the page.
-
     virtual_base = mmap(NULL, PAGE_SIZE, (PROT_READ | PROT_WRITE), MAP_SHARED, memfd, phys_addr & ~MAP_MASK);
     if (virtual_base == MAP_FAILED) {
         printf("Can't map the memory to user space.\n");
         exit(0);
     }
+
     // get the address of the device in user space which will be an offset from the base
     // that was mapped as memory is mapped at the start of a page
-
     mapped_dev_base = virtual_base + (phys_addr & MAP_MASK);
     return mapped_dev_base;
 }
@@ -278,17 +276,23 @@ void enable_f2h_acp(bool enable)
 
     uint32_t *bus_p;
 
+    printf("[INFO] Getting bus addresses\n");   
+
     bus_p = (uint32_t*)getvaddr(AXI_CACHE_SECRUITY_BRIDGE+0x00);
     *(bus_p) = awcache;
+    printf("bus_p = %p (%d)\n", bus_p, *bus_p); 
 
     bus_p = (uint32_t*)getvaddr(AXI_CACHE_SECRUITY_BRIDGE+0x04);
     *(bus_p) = awprot;
+    printf("bus_p = %p (%d)\n", bus_p, *bus_p); 
 
     bus_p = (uint32_t*)getvaddr(AXI_CACHE_SECRUITY_BRIDGE+0x08);
     *(bus_p) = awuser;
+    printf("bus_p = %p (%d)\n", bus_p, *bus_p); 
 
     bus_p = (uint32_t*)getvaddr(AXI_CACHE_SECRUITY_BRIDGE+0x10);
     *(bus_p) = arcache;
+    printf("bus_p = %p (%d)\n", bus_p, *bus_p); 
 
     bus_p = (uint32_t*)getvaddr(AXI_CACHE_SECRUITY_BRIDGE+0x14);
     *(bus_p) = arprot;

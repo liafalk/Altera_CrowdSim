@@ -115,8 +115,6 @@ __global StackNode* push (__global StackNode* stackNode, uchar retCode, float di
     return stackNode + 1;
 }
 
-
-
 AgentTreeNode vector_2_AgentTreeNode(uint16 v) {
     AgentTreeNode tn;
 

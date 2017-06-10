@@ -76,8 +76,7 @@
 
 #include "../../src/cmdoptions.hpp"
 
-// header file with functions related to custom SVM
-#include "../../../common/svm_utils/svm_utils.hpp"
+typedef uint32_t address_t;
 
 #pragma pack(push)
 
@@ -668,6 +667,9 @@ namespace RVO {
         KdTree *kdTree_;
         std::vector<Obstacle *> obstacles_;
         float timeStep_;
+
+        //cl_uint svm_treeBuffer_ptr;
+        //cl_uint testkernel;
 
         SVMAllocator* svmAllocator;
 
