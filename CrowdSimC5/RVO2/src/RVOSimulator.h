@@ -694,6 +694,8 @@ namespace RVO {
 
         address_t ttbr0_value; // address of Linux page table
         cl_mem dummy_p0;       // create dummy pointer to trick AOCL to support custom SVM code
+        cl_mem dummy_p1;       // create dummy pointer to trick AOCL to support custom SVM code
+        cl_mem dummy_p2;       // create dummy pointer to trick AOCL to support custom SVM code
         
         friend struct Agent;
         //friend struct AgentNeighbor;

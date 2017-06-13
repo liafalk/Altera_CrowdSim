@@ -400,6 +400,14 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created dummy_p0\n";
 
+                dummy_p1 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(int), NULL, &err);
+                SAMPLE_CHECK_ERRORS(err);
+                std::cout << "[ INFO ] Created dummy_p1\n";
+
+                dummy_p2 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(int), NULL, &err);
+                SAMPLE_CHECK_ERRORS(err);
+                std::cout << "[ INFO ] Created dummy_p2\n";
+
                 // Save the new buffer size value
                 agentsBufferSize_ = newAgentsBufferSize;
             }
@@ -441,7 +449,13 @@ namespace RVO {
 
             err = clSetKernelArg(kernelComputeNewVelocity_, 7, sizeof(cl_mem), &dummy_p0);
             SAMPLE_CHECK_ERRORS(err);
+/*
+            err = clSetKernelArg(kernelComputeNewVelocity_, 8, sizeof(cl_mem), &dummy_p1);
+            SAMPLE_CHECK_ERRORS(err);
 
+            err = clSetKernelArg(kernelComputeNewVelocity_, 9, sizeof(cl_mem), &dummy_p2);
+            SAMPLE_CHECK_ERRORS(err);
+*/
             size_t global_size = agents_.size();
 
             if(DEBUGON)

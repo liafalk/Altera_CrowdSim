@@ -100,7 +100,9 @@ void computeNewVelocity(__global Agent* agents,
                         __global unsigned* agentsForTree,
                         __global StackNode* stack,
                         svm_pointer_t ttbr0,                        // address of the page table entry
-                        __global int* restrict dummy_p0             // dummy pointer used to trick AOCL to support custom SVM code
+                        __global int* restrict dummy_p0,             // dummy pointer used to trick AOCL to support custom SVM code
+                        __global int* restrict dummy_p1,             // dummy pointer used to trick AOCL to support custom SVM code
+                        __global int* restrict dummy_p2              // dummy pointer used to trick AOCL to support custom SVM code
                     )
 {
     Agent agent = agents[get_global_id(0)];
@@ -165,10 +167,10 @@ void computeNewVelocity(__global Agent* agents,
                     break;
                 }
                 else {
-                    //AgentTreeNode leftNode = agentTree_[currentTreeNode.left];
-                    AgentTreeNode leftNode = vector_2_AgentTreeNode(
-                        host_memory_bridge_ld_512bit(dummy_p0, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*currentTreeNode.left)
-                    );
+                    AgentTreeNode leftNode = agentTree_[svm_currentTreeNode.left];
+                 //   AgentTreeNode leftNode = vector_2_AgentTreeNode(
+                 //       host_memory_bridge_ld_512bit(dummy_p1, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*svm_currentTreeNode.left)
+                 //   );
 
                     distSqLeft =
                         max(0.0f, leftNode.minX - agent.position_.x) +
@@ -176,10 +178,10 @@ void computeNewVelocity(__global Agent* agents,
                         max(0.0f, leftNode.minY - agent.position_.y) +
                         max(0.0f, agent.position_.y - leftNode.maxY);
 
-                    //AgentTreeNode rightNode = agentTree_[currentTreeNode.right];
-                    AgentTreeNode rightNode = vector_2_AgentTreeNode(
-                        host_memory_bridge_ld_512bit(dummy_p0, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*currentTreeNode.right)
-                    );
+                    AgentTreeNode rightNode = agentTree_[svm_currentTreeNode.right];
+                  //  AgentTreeNode rightNode = vector_2_AgentTreeNode(
+                  //      host_memory_bridge_ld_512bit(dummy_p2, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*svm_currentTreeNode.right)
+                  //  );
                     
                     distSqRight =
                         max(0.0f, rightNode.minX - agent.position_.x) +
@@ -192,7 +194,7 @@ void computeNewVelocity(__global Agent* agents,
                             //stackTop = push(stackTop, 1, distSqLeft, distSqRight, node); 
                             nodeStored = node;
                             retcodeStored = 1;
-                            node = currentTreeNode.left; 
+                            node = svm_currentTreeNode.left; 
                             retCode = 0;
                             break;
 
@@ -202,7 +204,7 @@ void computeNewVelocity(__global Agent* agents,
                                 //stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
                                 nodeStored = node;
                                 retcodeStored = 3;
-                                node = currentTreeNode.right; 
+                                node = svm_currentTreeNode.right; 
                                 retCode = 0;
                                 break;
                             }
@@ -213,7 +215,7 @@ void computeNewVelocity(__global Agent* agents,
                             //stackTop = push(stackTop, 2, distSqLeft, distSqRight, node); 
                             nodeStored = node;
                             retcodeStored = 2;
-                            node = currentTreeNode.right; 
+                            node = svm_currentTreeNode.right; 
                             retCode = 0;
                             break;
             case 2:
@@ -222,7 +224,7 @@ void computeNewVelocity(__global Agent* agents,
                                 //stackTop = push(stackTop, 3, distSqLeft, distSqRight, node);
                                 nodeStored = node;
                                 retcodeStored = 3; 
-                                node = currentTreeNode.left; 
+                                node = svm_currentTreeNode.left; 
                                 retCode = 0;
                                 break;
                             }
