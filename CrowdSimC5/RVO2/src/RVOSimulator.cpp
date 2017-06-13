@@ -484,7 +484,8 @@ namespace RVO {
                 agents_[i]->numAgentNeighbors_ = primitiveAgents[i].numAgentNeighbors_;
 
                     for(int j=0; j<agents_[i]->numAgentNeighbors_; ++j){
-                        agents_[i]->agentNeighbors_[j].first = primitiveAgentNeighbor[i*maxNeighbors + j].first;
+                        float distSq = primitiveAgentNeighbor[i*maxNeighbors + j].first;
+                        agents_[i]->agentNeighbors_[j].first = distSq*distSq;   // square since we removed that in kernel
                         agents_[i]->agentNeighbors_[j].second = agents_[primitiveAgentNeighbor[i*maxNeighbors + j].second];
                     }
             }
