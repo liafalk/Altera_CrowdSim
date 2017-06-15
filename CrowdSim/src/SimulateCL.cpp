@@ -50,6 +50,7 @@ void SimulateCL::setupScenario4(RVOSimulator* sim)
     sim->setTimeStep(cmdparser->time_step.getValue());
 
     // Specify the default parameters for agents that are subsequently added. 
+    //void RVOSimulator::setAgentDefaults(float neighborDist, size_t maxNeighbors, float timeHorizon, float timeHorizonObst, float radius, float maxSpeed, const Vector2 &velocity)
     sim->setAgentDefaults(15.0f, 10, 10.0f, 10.0f, cmdparser->agent_radius.getValue(), 3.0f);
     int gid = 0;   // goal id
     int sep = 50;  // seperation between the 4 groups

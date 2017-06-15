@@ -108,22 +108,14 @@ namespace RVO {
     {
         float first;
         ushort second;
-
-        AgentNeighborBuf () {}
-
-        AgentNeighborBuf (const std::pair<float, unsigned>& pair) :
-            first(pair.first),
-            second(pair.second)
-        {
-        }
     } AgentNeighborBuf;
 
     typedef struct __StackNode
     {
-        uchar retCode;
-        float distSqLeft;
-        float distSqRight;
-        ushort node;
+        cl_uchar retCode;
+        cl_float distSqLeft;
+        cl_float distSqRight;
+        cl_ushort node;
     } StackNode;
 
     typedef struct __attribute__((packed)) __attribute__((aligned(32))) __primAgent {
@@ -660,7 +652,7 @@ namespace RVO {
         //std::vector<Line> primitiveOrcaLines;
 
         //Agent* primitiveAgents;
-        primAgent* primitiveAgents
+        primAgent* primitiveAgents;
         unsigned* primitiveAgentsForTree;
         AgentNeighborBuf* primitiveAgentNeighbor;
         //Line* primitiveOrcaLines;

@@ -61,7 +61,7 @@ CmdParserCrowdSim::CmdParserCrowdSim (int argc, const char** argv) :
         "Turns graphics output off. "
             "Application works in console mode. "
             "Number of simulation steps is specified by --iterations option.",
-        false
+        true
     ),
     no_opencl
     (

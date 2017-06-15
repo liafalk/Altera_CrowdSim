@@ -44,37 +44,6 @@ typedef volatile struct __attribute__((packed)) __attribute__((aligned(32))) __A
     ushort id_;
 } Agent;
 
-
-/*
-#pragma pack(4)
-typedef struct __Agent {
-    //__global AgentNeighbor* agentNeighbors_;
-    long spacer1;
-    uint numAgentNeighbors_; // number of filled elements in agentNeighbors
-    uint maxNeighbors_;
-    float maxSpeed_;
-    float neighborDist_;
-    Vector2 newVelocity_;
-    //__global ObstacleNeighbor* obstacleNeighbors_;
-    long spacer2;
-    uint numObstacleNeighbors_; // number of filled elements in agentNeighbors
-    uint maxObstacleNeighbors_;  // number of allocated positions in obstacleNeighbors, can be increased dynamically
-    //__global Line* orcaLines_;
-    long spacer3;
-    uint numOrcaLines_;
-    //__global Line* projLines_;   // used as a scratch buffer for calling linearProgram3
-    long spacer4;
-    Vector2 position_;
-    Vector2 prefVelocity_;
-    float radius_;
-    //__global void *sim_;
-    long spacer5;
-    float timeHorizon_;
-    float timeHorizonObst_;
-    Vector2 velocity_;
-    uint id_;
-} Agent;
-*/
 typedef struct __attribute__((packed)) __attribute__((aligned(32))) __AgentTreeNode
 {
     uint begin;
@@ -114,23 +83,14 @@ __global StackNode* push (__global StackNode* stackNode, uchar retCode, float di
     return stackNode + 1;
 }
 
-//__attribute__((num_simd_work_items(1)))
-//__attribute__((max_work_group_size(64)))
 __kernel
 void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTree_, __global AgentNeighborBuf* agentNeighbors, __global unsigned* agentsForTree, __global StackNode* stack)
 {
     Agent agent = agents[get_global_id(0)];
-    //agent.numObstacleNeighbors_ = 0;
-    //float rangeSq = sqr(agent.timeHorizonObst_ * agent.maxSpeed_ + agent.radius_);
-
-    //agent.numAgentNeighbors_ = 0;
-    //rangeSq = sqr(agent.neighborDist_);
+    __global StackNode* stackTop = &stack[get_global_id(0)*MAX_KDTREE_DEPTH];
+    
     float rangeSq = 15.0f;
     ushort node = 0;
-    __global StackNode* stackTop = &stack[get_global_id(0)*MAX_KDTREE_DEPTH];
-    //StackNode stack[MAX_KDTREE_DEPTH];
-    //StackNode* stackTop = &stack[0];
-
     uchar retCode = 0;
 
     float distSqLeft;

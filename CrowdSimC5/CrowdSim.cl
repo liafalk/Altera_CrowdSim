@@ -32,10 +32,10 @@ typedef struct __attribute__((packed)) __attribute__((aligned(8))) __AgentNeighb
 
 
 typedef volatile struct __attribute__((packed)) __attribute__((aligned(32))) __Agent {
-    uchar numAgentNeighbors_;
+    uint numAgentNeighbors_;
     Vector2 position_;
     Vector2 velocity_;
-    ushort id_;
+    uint id_;
 } Agent;
 
 typedef struct __attribute__((packed)) __attribute__((aligned(32))) __AgentTreeNode
@@ -77,6 +77,20 @@ __global StackNode* push (__global StackNode* stackNode, uchar retCode, float di
     return stackNode + 1;
 }
 
+Agent toAgent(uint16 v)
+{
+    Agent tn;
+    tn.numAgentNeighbors_   = v.s0;
+    tn.position_.x          = (float)v.s1;
+    tn.position_.y          = (float)v.s2;
+    tn.velocity_.x          = (float)v.s3;
+    tn.velocity_.y          = (float)v.s4;
+    tn.id_                  = (float)v.s5;
+
+    return tn;
+}
+
+/*
 AgentTreeNode vector_2_AgentTreeNode(uint16 v) {
     AgentTreeNode tn;
 
@@ -91,11 +105,13 @@ AgentTreeNode vector_2_AgentTreeNode(uint16 v) {
 
     return tn;
 }
+*/
 
 __kernel
 void computeNewVelocity(__global Agent* agents,
+                        svm_pointer_t svm_agents_,  // svm pointer of agents
                         __global AgentTreeNode* agentTree_,
-                        svm_pointer_t svm_agentTree_,               // the svm version of the above pointer
+                        //svm_pointer_t svm_agentTree_,               // the svm version of the above pointer
                         __global AgentNeighborBuf* agentNeighbors,
                         __global unsigned* agentsForTree,
                         __global StackNode* stack,
@@ -105,7 +121,10 @@ void computeNewVelocity(__global Agent* agents,
                         __global int* restrict dummy_p2              // dummy pointer used to trick AOCL to support custom SVM code
                     )
 {
-    Agent agent = agents[get_global_id(0)];
+    //Agent agent = agents[get_global_id(0)];
+
+    Agent agent = toAgent( host_memory_bridge_ld_512bit(dummy_p0, ttbr0, svm_agents_ + sizeof(Agent)*node) );
+
     __global StackNode* stackTop = &stack[get_global_id(0)*MAX_KDTREE_DEPTH];
     
     
@@ -118,13 +137,14 @@ void computeNewVelocity(__global Agent* agents,
 
     for(;;)
     {
-        //const AgentTreeNode currentTreeNode = agentTree_[node];
+        const AgentTreeNode currentTreeNode = agentTree_[node];
         
         // svm read access (reading one tree node at pointer svm_agentTree_)
+        /*
         const AgentTreeNode svm_currentTreeNode = vector_2_AgentTreeNode(
             host_memory_bridge_ld_512bit (dummy_p0, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*node)
         );
-
+*/  
         ushort nodeStored;
         uchar retcodeStored = 0;
         switch(retCode) 
@@ -133,6 +153,7 @@ void computeNewVelocity(__global Agent* agents,
                 if (svm_currentTreeNode.end - svm_currentTreeNode.begin <= RVO_MAX_LEAF_SIZE) {                    
                     for (uint i = svm_currentTreeNode.begin; i < svm_currentTreeNode.end; ++i) {
                         Agent nearAgent = agents[agentsForTree[i]];
+                        //Agent nearAgent = toAgent( host_memory_bridge_ld_512bit(dummy_p0, ttbr0, svm_agents_ + sizeof(Agent)*agentsForTree[i]) );
                         if (agent.id_ != nearAgent.id_) {
 
                             const float distSq = length(agent.position_ - nearAgent.position_);
@@ -252,5 +273,8 @@ void computeNewVelocity(__global Agent* agents,
     }
 
     // copy back the modified field
-    agents[get_global_id(0)].numAgentNeighbors_ = agent.numAgentNeighbors_;
+    //agents[get_global_id(0)].numAgentNeighbors_ = agent.numAgentNeighbors_;
+    //uint4 host_memory_bridge_st_32bit (__global int *p0, svm_pointer_t ttbr0, svm_pointer_t va, uint write_data);
+    //store 32 bits in SVM fashion
+    host_memory_bridge_st_32bit(dummy_p0, ttbr0, svm_agents_ + sizeof(Agent)*get_global_id(0), agent.numAgentNeighbors_)
 }
