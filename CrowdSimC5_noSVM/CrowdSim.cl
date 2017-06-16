@@ -66,7 +66,7 @@ inline float sqr (float x)
     return x*x;
 }
 
-typedef struct __StackNode
+typedef struct __attribute__((packed)) __attribute__((aligned(16))) __StackNode
 {
     uchar retCode;
     float distSqLeft;
