@@ -92,7 +92,7 @@ Agent toAgent(uint16 v)
     return tn;
 }
 
-/*
+
 AgentTreeNode vector_2_AgentTreeNode(uint16 v) {
     AgentTreeNode tn;
 
@@ -107,12 +107,10 @@ AgentTreeNode vector_2_AgentTreeNode(uint16 v) {
 
     return tn;
 }
-*/
+
 
 __kernel
 void computeNewVelocity(__global Agent* agents,
-                        //svm_pointer_t svm_agents_,  // svm pointer of agents
-                        //__global AgentTreeNode* agentTree_,
                         __global AgentNeighborBuf* agentNeighbors,
                         __global unsigned* agentsForTree,
                         __global StackNode* restrict stack,

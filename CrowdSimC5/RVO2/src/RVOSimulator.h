@@ -685,7 +685,7 @@ namespace RVO {
 
         // Modified OpenCL1.x buffers
         cl_mem agentsBuffer;
-        cl_mem treeBuffer;
+        //cl_mem treeBuffer;
         cl_mem agentNeighborBuffer;
         cl_mem orcaLineBuffer;
         cl_mem projBuffer;
