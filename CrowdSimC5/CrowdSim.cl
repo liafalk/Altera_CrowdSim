@@ -70,10 +70,12 @@ typedef struct __StackNode
 
 __global StackNode* push (__global StackNode* stackNode, uchar retCode, float distSqLeft, float distSqRight, ushort node)
 {
-    stackNode->retCode = retCode;
-    stackNode->distSqLeft = distSqLeft;
-    stackNode->distSqRight = distSqRight;
-    stackNode->node = node;
+    StackNode s;
+    s.retCode = retCode;
+    s.distSqLeft = distSqLeft;
+    s.distSqRight = distSqRight;
+    s.node = node;
+    *stackNode = s;
     return stackNode + 1;
 }
 
@@ -109,23 +111,23 @@ AgentTreeNode vector_2_AgentTreeNode(uint16 v) {
 
 __kernel
 void computeNewVelocity(__global Agent* agents,
-                        svm_pointer_t svm_agents_,  // svm pointer of agents
-                        __global AgentTreeNode* agentTree_,
-                        //svm_pointer_t svm_agentTree_,               // the svm version of the above pointer
+                        //svm_pointer_t svm_agents_,  // svm pointer of agents
+                        //__global AgentTreeNode* agentTree_,
                         __global AgentNeighborBuf* agentNeighbors,
                         __global unsigned* agentsForTree,
-                        __global StackNode* stack,
+                        __global StackNode* restrict stack,
                         svm_pointer_t ttbr0,                        // address of the page table entry
+                        svm_pointer_t svm_agentTree_,               // the svm version of the above pointer
                         __global int* restrict dummy_p0,             // dummy pointer used to trick AOCL to support custom SVM code
                         __global int* restrict dummy_p1,             // dummy pointer used to trick AOCL to support custom SVM code
                         __global int* restrict dummy_p2              // dummy pointer used to trick AOCL to support custom SVM code
                     )
 {
-    //Agent agent = agents[get_global_id(0)];
+    Agent agent = agents[get_global_id(0)];
 
-    Agent agent = toAgent( host_memory_bridge_ld_512bit(dummy_p0, ttbr0, svm_agents_ + sizeof(Agent)*node) );
+    //Agent agent = toAgent( host_memory_bridge_ld_512bit(dummy_p0, ttbr0, svm_agents_ + sizeof(Agent)*node) );
 
-    __global StackNode* stackTop = &stack[get_global_id(0)*MAX_KDTREE_DEPTH];
+    __global StackNode* restrict stackTop = &stack[get_global_id(0)*MAX_KDTREE_DEPTH];
     
     
     float rangeSq = 225.0f;
@@ -137,14 +139,14 @@ void computeNewVelocity(__global Agent* agents,
 
     for(;;)
     {
-        const AgentTreeNode currentTreeNode = agentTree_[node];
+        //const AgentTreeNode currentTreeNode = agentTree_[node];
         
         // svm read access (reading one tree node at pointer svm_agentTree_)
-        /*
+        
         const AgentTreeNode svm_currentTreeNode = vector_2_AgentTreeNode(
             host_memory_bridge_ld_512bit (dummy_p0, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*node)
         );
-*/  
+  
         ushort nodeStored;
         uchar retcodeStored = 0;
         switch(retCode) 
@@ -188,10 +190,10 @@ void computeNewVelocity(__global Agent* agents,
                     break;
                 }
                 else {
-                    AgentTreeNode leftNode = agentTree_[svm_currentTreeNode.left];
-                 //   AgentTreeNode leftNode = vector_2_AgentTreeNode(
-                 //       host_memory_bridge_ld_512bit(dummy_p1, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*svm_currentTreeNode.left)
-                 //   );
+                    //AgentTreeNode leftNode = agentTree_[svm_currentTreeNode.left];
+                    AgentTreeNode leftNode = vector_2_AgentTreeNode(
+                        host_memory_bridge_ld_512bit(dummy_p1, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*svm_currentTreeNode.left)
+                    );
 
                     distSqLeft =
                         sqr(max(0.0f, leftNode.minX - agent.position_.x)) +
@@ -199,10 +201,10 @@ void computeNewVelocity(__global Agent* agents,
                         sqr(max(0.0f, leftNode.minY - agent.position_.y)) +
                         sqr(max(0.0f, agent.position_.y - leftNode.maxY));
 
-                    AgentTreeNode rightNode = agentTree_[svm_currentTreeNode.right];
-                  //  AgentTreeNode rightNode = vector_2_AgentTreeNode(
-                  //      host_memory_bridge_ld_512bit(dummy_p2, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*svm_currentTreeNode.right)
-                  //  );
+                   // AgentTreeNode rightNode = agentTree_[svm_currentTreeNode.right];
+                    AgentTreeNode rightNode = vector_2_AgentTreeNode(
+                        host_memory_bridge_ld_512bit(dummy_p2, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*svm_currentTreeNode.right)
+                    );
                     
                     distSqRight =
                         sqr(max(0.0f, rightNode.minX - agent.position_.x)) +
@@ -266,15 +268,17 @@ void computeNewVelocity(__global Agent* agents,
 
         stackTop--;
 
-        retCode = stackTop->retCode;
-        distSqLeft = stackTop->distSqLeft;
-        distSqRight = stackTop->distSqRight;
-        node = stackTop->node;
+        StackNode s = *stackTop;
+
+        retCode = s.retCode;
+        distSqLeft = s.distSqLeft;
+        distSqRight = s.distSqRight;
+        node = s.node;
     }
 
     // copy back the modified field
-    //agents[get_global_id(0)].numAgentNeighbors_ = agent.numAgentNeighbors_;
+    agents[get_global_id(0)].numAgentNeighbors_ = agent.numAgentNeighbors_;
     //uint4 host_memory_bridge_st_32bit (__global int *p0, svm_pointer_t ttbr0, svm_pointer_t va, uint write_data);
     //store 32 bits in SVM fashion
-    host_memory_bridge_st_32bit(dummy_p0, ttbr0, svm_agents_ + sizeof(Agent)*get_global_id(0), agent.numAgentNeighbors_)
+    //host_memory_bridge_st_32bit(dummy_p1, ttbr0, svm_agents_ + sizeof(Agent)*get_global_id(0), agent.numAgentNeighbors_)
 }
