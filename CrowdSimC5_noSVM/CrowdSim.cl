@@ -89,7 +89,7 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
     Agent agent = agents[get_global_id(0)];
     __global StackNode* stackTop = &stack[get_global_id(0)*MAX_KDTREE_DEPTH];
     
-    float rangeSq = 15.0f;
+    float rangeSq = 225.0f;
     ushort node = 0;
     uchar retCode = 0;
 
@@ -106,12 +106,10 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
             case 0:
                 if (currentTreeNode.end - currentTreeNode.begin <= RVO_MAX_LEAF_SIZE) {                    
                     for (uint i = currentTreeNode.begin; i < currentTreeNode.end; ++i) {
-                        //const uint kdKey = ;
-                        //const uint nextID = agents[agentsForTree[i]].id_;
                         Agent nearAgent = agents[agentsForTree[i]];
                         if (agent.id_ != nearAgent.id_) {
 
-                            const float distSq = length(agent.position_ - nearAgent.position_);
+                            const float distSq = absSq(agent.position_ - nearAgent.position_);
                             
                             if (distSq < rangeSq) {
                                 const ushort indexBias = 10*get_global_id(0);
@@ -145,17 +143,17 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
                 else {
                     AgentTreeNode leftNode = agentTree_[currentTreeNode.left];
                     distSqLeft =
-                        max(0.0f, leftNode.minX - agent.position_.x) +
-                        max(0.0f, agent.position_.x - leftNode.maxX) +
-                        max(0.0f, leftNode.minY - agent.position_.y) +
-                        max(0.0f, agent.position_.y - leftNode.maxY);
+                        sqr(max(0.0f, leftNode.minX - agent.position_.x)) +
+                        sqr(max(0.0f, agent.position_.x - leftNode.maxX)) +
+                        sqr(max(0.0f, leftNode.minY - agent.position_.y)) +
+                        sqr(max(0.0f, agent.position_.y - leftNode.maxY));
 
                     AgentTreeNode rightNode = agentTree_[currentTreeNode.right];
                     distSqRight =
-                        max(0.0f, rightNode.minX - agent.position_.x) +
-                        max(0.0f, agent.position_.x - rightNode.maxX) +
-                        max(0.0f, rightNode.minY - agent.position_.y) +
-                        max(0.0f, agent.position_.y - rightNode.maxY);
+                        sqr(max(0.0f, rightNode.minX - agent.position_.x)) +
+                        sqr(max(0.0f, agent.position_.x - rightNode.maxX)) +
+                        sqr(max(0.0f, rightNode.minY - agent.position_.y)) +
+                        sqr(max(0.0f, agent.position_.y - rightNode.maxY));
                     
                     if (distSqLeft < distSqRight) {
                         if (distSqLeft < rangeSq) {
