@@ -87,7 +87,7 @@ architecture Behavioral of host_memory_bridge_a0b1c2d3_512bit_rw is
     constant USE_CACHING : integer := 1;
     constant CACHESIZE : integer := 1024;
 
-    constant LSU_STYLE : string := "BURST-COALESCED";
+    constant LSU_STYLE : string := "SIMPLE"; --"BURST-COALESCED";
 
     constant MEMORY_WIDTH : integer := 128;
 

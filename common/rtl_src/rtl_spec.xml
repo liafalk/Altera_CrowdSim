@@ -84,7 +84,7 @@
         <ATTRIBUTES>
         <IS_STALL_FREE value="no"/>
         <IS_FIXED_LATENCY value="no"/>
-        <EXPECTED_LATENCY value="1280"/>
+        <EXPECTED_LATENCY value="1"/>
         <CAPACITY value="1"/>
         <HAS_SIDE_EFFECTS value="yes"/>
         <ALLOW_MERGING value="no"/>
