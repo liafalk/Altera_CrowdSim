@@ -120,11 +120,12 @@ namespace RVO {
         cl_ushort node;
     } StackNode;
 
-    typedef struct __attribute__((packed)) __attribute__((aligned(32))) __primAgent {
-        cl_uchar numAgentNeighbors_;
+    typedef struct __attribute__((packed)) __attribute__((aligned(32))) __primAgent
+    {
+        cl_uint numAgentNeighbors_;
         cl_float2 position_;
         cl_float2 velocity_;
-        cl_ushort id_;
+        cl_uint id_;
     } primAgent;
 
     struct Agent;
