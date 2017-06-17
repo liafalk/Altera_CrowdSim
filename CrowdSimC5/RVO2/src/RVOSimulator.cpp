@@ -446,6 +446,7 @@ namespace RVO {
             err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(cl_mem), &stackBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
+
             err = clSetKernelArg(kernelComputeNewVelocity_, 4, sizeof(cl_uint), &ttbr0_value);
             SAMPLE_CHECK_ERRORS(err);
 
@@ -464,6 +465,7 @@ namespace RVO {
             SAMPLE_CHECK_ERRORS(err);
 
             size_t global_size = agents_.size();
+
 
             if(DEBUGON)
             {

@@ -68,7 +68,7 @@ typedef struct __StackNode
     ushort node;
 } StackNode;
 
-__global StackNode* push (__global StackNode* stackNode, uchar retCode, float distSqLeft, float distSqRight, ushort node)
+__global StackNode* push (__global StackNode* restrict stackNode, uchar retCode, float distSqLeft, float distSqRight, ushort node)
 {
     StackNode s;
     s.retCode = retCode;
