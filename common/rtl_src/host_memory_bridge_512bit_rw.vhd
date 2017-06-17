@@ -83,8 +83,8 @@ end host_memory_bridge_a0b1c2d3_512bit_rw;
 architecture Behavioral of host_memory_bridge_a0b1c2d3_512bit_rw is
  
 
-    constant PROFILE : integer := 1;
-    constant USE_CACHING : integer := 1;
+    constant PROFILE : integer := 0;
+    constant USE_CACHING : integer := 0;
     constant CACHESIZE : integer := 1024;
 
     constant LSU_STYLE : string := "SIMPLE"; --"BURST-COALESCED";
