@@ -18,7 +18,10 @@
 // Intel Corporation is the author of the Materials, and requests that all
 // problem reports or change requests be submitted to it directly
 
+#ifdef ENABLE_PNG
 #include "pngwriter.h"
+#endif
+
 #include <stdio.h>
 #include <cstdio>
 #include <iostream>
@@ -393,8 +396,8 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
     double endSimTime = time_stamp();
     *pKernelTime = endSimTime - startSimTime;
 
+#ifdef ENABLE_PNG
     pngwriter canvas(400,400,1.0, std::string("output/" + std::to_string(iteration) + ".png").c_str());
-
     for (int i=0; i<crowd_sim->getNumAgents(); ++i){
         canvas.filledcircle(crowd_sim->getAgentPosition(i).x()+200, crowd_sim->getAgentPosition(i).y()+200, 1,65535,0,0);
         #ifdef DEBUG_PRINT_ALL_AGENTS
@@ -404,6 +407,7 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
         #endif
     }
     canvas.close();
+#endif
 
     bool ret = !reachedGoal(crowd_sim);
 
