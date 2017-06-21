@@ -78,50 +78,60 @@ namespace RVO {
         /**
          * \brief      Defines an agent <i>k</i>d-tree node.
          */
-        #pragma pack(4)
-        class AgentTreeNode {
-        public:
-            /**
-             * \brief      The beginning node number.
-             */
-            cl_uint begin;
+        // #pragma pack(4)
+        // class AgentTreeNode {
+        // public:
+        //     /**
+        //      * \brief      The beginning node number.
+        //      */
+        //     cl_uint begin;
 
-            /**
-             * \brief      The ending node number.
-             */
-            cl_uint end;
+        //     /**
+        //      * \brief      The ending node number.
+        //      */
+        //     cl_uint end;
 
-            /**
-             * \brief      The left node number.
-             */
-            cl_uint left;
+        //     /**
+        //      * \brief      The left node number.
+        //      */
+        //     cl_uint left;
 
-            /**
-             * \brief      The maximum x-coordinate.
-             */
+        //     /**
+        //      * \brief      The maximum x-coordinate.
+        //      */
+        //     float maxX;
+
+        //     /**
+        //      * \brief      The maximum y-coordinate.
+        //      */
+        //     float maxY;
+
+        //     /**
+        //      * \brief      The minimum x-coordinate.
+        //      */
+        //     float minX;
+
+        //     /**
+        //      * \brief      The minimum y-coordinate.
+        //      */
+        //     float minY;
+
+        //     /**
+        //      * \brief      The right node number.
+        //      */
+        //     cl_uint right;
+        // };
+        typedef struct __attribute__((packed)) __attribute__((aligned(32))) __AgentTreeNode
+        {
+            uint begin;
+            uint end;
+            uint left;
             float maxX;
-
-            /**
-             * \brief      The maximum y-coordinate.
-             */
             float maxY;
-
-            /**
-             * \brief      The minimum x-coordinate.
-             */
             float minX;
-
-            /**
-             * \brief      The minimum y-coordinate.
-             */
             float minY;
-
-            /**
-             * \brief      The right node number.
-             */
-            cl_uint right;
-        };
-
+            uint right;
+        } AgentTreeNode;
         /**
          * \brief      Defines an obstacle <i>k</i>d-tree node.
          */

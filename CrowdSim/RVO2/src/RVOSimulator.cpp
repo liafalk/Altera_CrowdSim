@@ -331,13 +331,13 @@ namespace RVO {
         err = posix_memalign((void**)&primitiveAgentNeighbor, 64, primitiveAgentNeighbor_size);
         printf("primitiveAgentNeighbor created (%d).\n", err);
 
-        primitiveOrcaLines_size = (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(Line);
-        err = posix_memalign((void**)&primitiveOrcaLines, 64, primitiveOrcaLines_size);
-        printf("primitiveOrcaLines created (%d).\n", err);
+        // primitiveOrcaLines_size = (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(Line);
+        // err = posix_memalign((void**)&primitiveOrcaLines, 64, primitiveOrcaLines_size);
+        // printf("primitiveOrcaLines created (%d).\n", err);
     }
 
 #define DEBUGON 1
-#define FORCE_C_NEIGHBORS_KERNEL
+//#define FORCE_C_NEIGHBORS_KERNEL
     void RVOSimulator::doStep_NoSVM()
     {
         std::cout << "[ INFO ] Begin step\n";
@@ -401,29 +401,21 @@ namespace RVO {
                 for(int i=0; i<numAgents; ++i){
                     // will be 0, but just in case
                     
-                    for (int j=0; j<agents_[i]->numOrcaLines_; ++j){
-                        primitiveOrcaLines[i*numOrcaLines + j] = agents_[i]->orcaLines_[j];
-                    }
+                    // for (int j=0; j<agents_[i]->numOrcaLines_; ++j){
+                    //     primitiveOrcaLines[i*numOrcaLines + j] = agents_[i]->orcaLines_[j];
+                    // }
                     
-                    /*
-                    primAgent copyAgent;
-                    copyAgent.numAgentNeighbors_ = agents_[i]->numAgentNeighbors_;
-                    copyAgent.maxNeighbors_ = agents_[i]->maxNeighbors_;
-                    copyAgent.maxSpeed_ = agents_[i]->maxSpeed_;
-                    copyAgent.neighborDist_ = agents_[i]->neighborDist_;
-                    copyAgent.newVelocity_ = {agents_[i]->newVelocity_.x(), agents_[i]->newVelocity_.y()};
-                    copyAgent.numObstacleNeighbors_ = agents_[i]->numObstacleNeighbors_;
-                    copyAgent.maxObstacleNeighbors_ = agents_[i]->maxObstacleNeighbors_;
-                    copyAgent.numOrcaLines_ = agents_[i]->numOrcaLines_;
-                    copyAgent.position_ = {agents_[i]->position_.x(), agents_[i]->position_.y()};
-                    copyAgent.prefVelocity_ = {agents_[i]->prefVelocity_.x(), agents_[i]->prefVelocity_.y()};
-                    copyAgent.radius_ = agents_[i]->radius_;
-                    copyAgent.timeHorizon_ = agents_[i]->timeHorizon_;
-                    copyAgent.timeHorizonObst_ = agents_[i]->timeHorizonObst_;
-                    copyAgent.velocity_ = {agents_[i]->velocity_.x(), agents_[i]->velocity_.y()};
-                    copyAgent.id_ = agents_[i]->id_;
+                    
+                    //primAgent copyAgent;
+                    primitiveAgents[i].numAgentNeighbors_ = 0;
+                    primitiveAgents[i].newVelocity_ = {agents_[i]->newVelocity_.x(), agents_[i]->newVelocity_.y()};
+                    primitiveAgents[i].numOrcaLines_ = agents_[i]->numOrcaLines_;
+                    primitiveAgents[i].position_ = {agents_[i]->position_.x(), agents_[i]->position_.y()};
+                    primitiveAgents[i].prefVelocity_ = {agents_[i]->prefVelocity_.x(), agents_[i]->prefVelocity_.y()};
+                    primitiveAgents[i].velocity_ = {agents_[i]->velocity_.x(), agents_[i]->velocity_.y()};
+                    primitiveAgents[i].id_ = agents_[i]->id_;
 
-                    primitiveAgents2.push_back(copyAgent); */
+                    //primitiveAgents2.push_back(copyAgent);
 
                     //primitiveAgents.push_back(*agents_[i]);
                     //primitiveAgentsForTree.push_back(kdTree_->agents_[i]->id_);
@@ -432,8 +424,8 @@ namespace RVO {
                     //agents_[i] = &primitiveAgents[i];
 
                     // implementation with malloc (already sized array)
-                    primitiveAgents[i] = *agents_[i];
-                    //primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
+                    //primitiveAgents[i] = *agents_[i];
+                    primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
                 }
                 
                 agentsBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, newAgentsBufferSize, &primitiveAgents[0], &err);
@@ -444,7 +436,9 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentNeighborBuffer\n";
 
-                orcaLineBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, primitiveOrcaLines_size, &primitiveOrcaLines[0], &err);
+                primitiveOrcaLines_size = (defaultAgent_->maxObstacleNeighbors_+maxNeighbors)*numAgents*sizeof(LineBuf);
+
+                orcaLineBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, primitiveOrcaLines_size, NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created orcaLineBuffer\n";                
 
@@ -452,7 +446,6 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created projBuffer\n";
 
-                /*
                 treeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created treeBuffer\n";
@@ -464,7 +457,6 @@ namespace RVO {
                 stackBuffer = clCreateBuffer(oclobjects_->context,  CL_MEM_WRITE_ONLY, sizeof(StackNode)*numAgents, NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created stackBuffer\n";
-                */
 
                 if(DEBUGON)
                 {
@@ -478,8 +470,15 @@ namespace RVO {
             else{ // if not, we need to update the kdTree and neighbours!
 
                 for(int i=0; i<numAgents; ++i){
-                    primitiveAgents[i] = *agents_[i];
-                    //primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
+                    //primitiveAgents[i] = *agents_[i];
+                    primitiveAgents[i].numAgentNeighbors_ = 0;
+                    primitiveAgents[i].newVelocity_ = {agents_[i]->newVelocity_.x(), agents_[i]->newVelocity_.y()};
+                    primitiveAgents[i].numOrcaLines_ = agents_[i]->numOrcaLines_;
+                    primitiveAgents[i].position_ = {agents_[i]->position_.x(), agents_[i]->position_.y()};
+                    primitiveAgents[i].prefVelocity_ = {agents_[i]->prefVelocity_.x(), agents_[i]->prefVelocity_.y()};
+                    primitiveAgents[i].velocity_ = {agents_[i]->velocity_.x(), agents_[i]->velocity_.y()};
+                    primitiveAgents[i].id_ = agents_[i]->id_;
+                    primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
                 }
                 
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsBuffer, CL_TRUE, 0, newAgentsBufferSize, &primitiveAgents[0], 0, NULL, NULL);
@@ -488,16 +487,14 @@ namespace RVO {
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentNeighborBuffer, CL_TRUE, 0, primitiveAgentNeighbor_size, &primitiveAgentNeighbor[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);                
                 
-                /*
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsForTreeBuffer, CL_TRUE, 0, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
                           
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, treeBuffer, CL_TRUE, 0, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], 0, NULL, NULL);
-                SAMPLE_CHECK_ERRORS(err);
-                */           
+                SAMPLE_CHECK_ERRORS(err);        
             }
 
-/*          If you ever need to enable OpenCL computation of the AgentNeighbors, uncomment this space...!
+            //If you ever need to enable OpenCL computation of the AgentNeighbors, uncomment this space...!
             err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
             
@@ -521,8 +518,8 @@ namespace RVO {
 
             err = clSetKernelArg(kernelComputeNewVelocity_, 7 , sizeof(cl_mem), &stackBuffer);
             SAMPLE_CHECK_ERRORS(err);
-*/
 
+/*
             err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
@@ -537,7 +534,7 @@ namespace RVO {
 
             err = clSetKernelArg(kernelComputeNewVelocity_, 4, sizeof(cl_mem), &projBuffer);
             SAMPLE_CHECK_ERRORS(err);
-
+*/
             size_t global_size = agents_.size();
 
             if(DEBUGON)
@@ -623,8 +620,15 @@ namespace RVO {
 
             for(int i=0; i<agents_.size(); ++i){
                 //agents_[i] = &primitiveAgents[i];
-                *agents_[i] = primitiveAgents[i];
+                //*agents_[i] = primitiveAgents[i];
                 //printf("id %d: agent=%f, primAgent=%f\n", i, agents_[i]->position_.x(), primitiveAgents[i].position_.x());
+                agents_[i]->numAgentNeighbors_ = primitiveAgents[i].numAgentNeighbors_;
+                agents_[i]->id_ = primitiveAgents[i].id_;
+                agents_[i]->numOrcaLines_ = primitiveAgents[i].numOrcaLines_;
+                agents_[i]->position_ =     Vector2(primitiveAgents[i].position_.s[0], primitiveAgents[i].position_.s[1]);
+                agents_[i]->prefVelocity_ = Vector2(primitiveAgents[i].prefVelocity_.s[0], primitiveAgents[i].prefVelocity_.s[1]);
+                agents_[i]->velocity_ =     Vector2(primitiveAgents[i].velocity_.s[0], primitiveAgents[i].velocity_.s[1]);
+                agents_[i]->newVelocity_ =  Vector2(primitiveAgents[i].newVelocity_.s[0], primitiveAgents[i].newVelocity_.s[1]);
 
             }
             //std::cout << agents_[0]->velocity_.x() << std::endl;

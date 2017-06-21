@@ -397,24 +397,28 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
     double endSimTime = time_stamp();
     *pKernelTime = endSimTime - startSimTime;
 
-    pngwriter canvas(400,400,1.0, std::string("output/" + std::to_string(iteration) + ".png").c_str());
+    
     
     #define DEBUG_PRINT 1
     #if DEBUG_PRINT == 1
-        int TESTID = 0;
-        printf("Agent %d's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", TESTID, crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), 
-        crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
+        int TESTID = 40;
+        printf("Agent %d's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f) - numNeighbors = %d\n", TESTID, crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), 
+        crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y(), crowd_sim->getAgentNumAgentNeighbors(TESTID));
     #endif
-    for (int i=0; i<crowd_sim->getNumAgents(); ++i){
-        canvas.filledcircle(crowd_sim->getAgentPosition(i).x()+200, crowd_sim->getAgentPosition(i).y()+200, 1,65535,0,0);
-        #if DEBUG_PRINT == 2
-        int TESTID = i;
-        printf("Agent %d's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", TESTID, crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), 
-            crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
-        #endif
-    }
-    canvas.close();
 
+    if(cmdparser->enable_video.getValue())
+    {
+        pngwriter canvas(400,400,1.0, std::string("output/" + std::to_string(iteration) + ".png").c_str());
+        for (int i=0; i<crowd_sim->getNumAgents(); ++i){
+            canvas.filledcircle(crowd_sim->getAgentPosition(i).x()+200, crowd_sim->getAgentPosition(i).y()+200, 2,65535,0,0);
+            #if DEBUG_PRINT == 2
+            int TESTID = i;
+            printf("Agent %d's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", TESTID, crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), 
+                crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
+            #endif
+        }
+        canvas.close();
+    }
 
     bool ret = !reachedGoal(crowd_sim);
 

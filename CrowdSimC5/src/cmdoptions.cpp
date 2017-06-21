@@ -73,6 +73,16 @@ CmdParserCrowdSim::CmdParserCrowdSim (int argc, const char** argv) :
             "The reference implmentation works instead.",
         false
     ),
+    enable_video
+    (
+        *this,
+        0,
+        "enable-video",
+        "",
+        "Outputs video frames. "
+            "Saved to output/",
+        false
+    ),
     #ifdef INTEL_NOT_FOR_RELEASE
     validation(
         *this,

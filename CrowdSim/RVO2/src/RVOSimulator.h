@@ -104,45 +104,33 @@ namespace RVO {
         Vector2 direction;
     };
 
-#pragma pack(4)
-    struct AgentNeighborBuf
+    typedef struct __attribute__((packed)) __attribute__((aligned(16))) __LineBuf
+    {   
+        cl_float2 direction;
+        cl_float2 point;
+    } LineBuf;
+
+    typedef struct __attribute__((packed)) __attribute__((aligned(8))) __AgentNeighborBuf
     {
         cl_float first;
-        cl_uint second;
+        cl_ushort second;
+    } AgentNeighborBuf;
 
-        AgentNeighborBuf () {}
-
-        AgentNeighborBuf (const std::pair<float, unsigned>& pair) :
-            first(pair.first),
-            second(pair.second)
-        {
-        }
-    };
-
-    typedef struct __StackNode
+    typedef struct __attribute__((packed)) __attribute__((aligned(16))) __StackNode
     {
-        uint retCode;
-        float distSqLeft;
-        float distSqRight;
-        uint node;
+        cl_uchar retCode;
+        cl_float distSqLeft;
+        cl_float distSqRight;
+        cl_ushort node;
     } StackNode;
 
-#pragma pack(4)
-    typedef struct __primAgent {
-        cl_uint numAgentNeighbors_;
-        cl_uint maxNeighbors_;
-        cl_float maxSpeed_;
-        cl_float neighborDist_;
-        cl_float2 newVelocity_;
-        cl_uint numObstacleNeighbors_; // number of filled elements in agentNeighbors
-        cl_uint maxObstacleNeighbors_;  // number of allocated positions in obstacleNeighbors, can be increased dynamically
-        cl_uint numOrcaLines_;
+    typedef struct __attribute__((packed)) __attribute__((aligned(64))) __primAgent {
         cl_float2 position_;
         cl_float2 prefVelocity_;
-        cl_float radius_;
-        cl_float timeHorizon_;
-        cl_float timeHorizonObst_;
         cl_float2 velocity_;
+        cl_float2 newVelocity_;
+        cl_uint numAgentNeighbors_; // number of filled elements in agentNeighbors
+        cl_uint numOrcaLines_;
         cl_uint id_;
     } primAgent;
 
@@ -672,7 +660,7 @@ namespace RVO {
         //std::vector<AgentNeighborBuf> primitiveAgentNeighbor;
         //std::vector<Line> primitiveOrcaLines;
 
-        Agent* primitiveAgents;
+        primAgent* primitiveAgents;
         unsigned* primitiveAgentsForTree;
         AgentNeighborBuf* primitiveAgentNeighbor;
         Line* primitiveOrcaLines;

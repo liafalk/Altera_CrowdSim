@@ -226,7 +226,8 @@ namespace RVO {
         agent->radius_ = defaultAgent_->radius_;
         agent->timeHorizon_ = defaultAgent_->timeHorizon_;
         agent->timeHorizonObst_ = defaultAgent_->timeHorizonObst_;
-        agent->velocity_ = defaultAgent_->velocity_;
+        //agent->velocity_ = defaultAgent_->velocity_;
+        agent->velocity_ = Vector2(0.0f, 0.0f);
 
         agent->id_ = cl_uint(agents_.size());
 
@@ -332,10 +333,13 @@ namespace RVO {
         printf("primitiveAgentNeighbor created (%d).\n", err);
     }
 
-#define DEBUGON 1
+#define DEBUGON 0
     void RVOSimulator::doStep_NoSVM()
     {
-        std::cout << "[ INFO ] Begin step\n";
+        if(DEBUGON)
+        {
+            std::cout << "[ INFO ] Begin step\n";
+        }
         double simStartStamp = 0, simBuildAgentTreeStamp = 0, simVelocitiesStamp = 0;
 
         kdTree_->buildAgentTree();
@@ -402,8 +406,11 @@ namespace RVO {
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, treeBuffer, CL_TRUE, 0, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
             }
-
-            std::cout << "[ INFO ] Assigning kernel argumetns\n";
+            
+            if(DEBUGON)
+            {
+                std::cout << "[ INFO ] Assigning kernel argumetns\n";
+            }
             err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
             
@@ -455,20 +462,41 @@ namespace RVO {
             err =  clEnqueueReadBuffer(oclobjects_->queue, agentNeighborBuffer, CL_TRUE, 0, primitiveAgentNeighbor_size, &primitiveAgentNeighbor[0], 0, NULL, NULL);
             SAMPLE_CHECK_ERRORS(err);
 
-            std::cout << "[ INFO ] Read successful, copying to local data structures\n";
+            if(DEBUGON)
+            {
+                std::cout << "[ INFO ] Read successful, copying to local data structures\n";
+            }
             unsigned maxNeighbors = defaultAgent_->maxNeighbors_;
             for(int i=0; i<agents_.size(); ++i){
                 agents_[i]->numAgentNeighbors_ = primitiveAgents[i].numAgentNeighbors_;
                     for(int j=0; j<agents_[i]->numAgentNeighbors_; ++j){
                         agents_[i]->agentNeighbors_[j].first = primitiveAgentNeighbor[i*maxNeighbors + j].first;
                         agents_[i]->agentNeighbors_[j].second = agents_[primitiveAgentNeighbor[i*maxNeighbors + j].second];
+                        /*
+                        if (i==5){
+                            int k = agents_[i]->agentNeighbors_[j].second->id_;
+                            float ax = agents_[i]->position_.x();
+                            float ay = agents_[i]->position_.y();
+                            float bx = agents_[k]->position_.x();
+                            float by = agents_[k]->position_.y();
+                            printf("absSq {%f, %f} - {%f, %f} = %f\n", ax, ay, bx, by, (ax-bx)*(ax-bx)+(ay-by)*(ay-by) );
+                            printf("neighbor %d, distSq=%f, id=%d\n", j, agents_[i]->agentNeighbors_[j].first, agents_[i]->agentNeighbors_[j].second->id_);
+                        }
+                        */
                     }
             }
 
-            std::cout << "[ INFO ] Launching computeNewVelocity and update \n";
+            if(DEBUGON)
+            {
+                std::cout << "[ INFO ] Launching computeNewVelocity and update \n";
+            }
+
             for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
                 agents_[i]->computeNewVelocity();
+            }
+            for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
                 agents_[i]->update();
+                
             }
 
             if(DEBUGON)

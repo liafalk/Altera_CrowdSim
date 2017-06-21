@@ -249,7 +249,7 @@ namespace RVO {
             const float denominator = det(lines[lineNo].direction, lines[i].direction);
             const float numerator = det(lines[i].direction, lines[lineNo].point - lines[i].point);
 
-            if (std::fabs(denominator) <= RVO_EPSILON) {
+            if ((float)std::fabs(denominator) <= RVO_EPSILON) {
                 /* Lines lineNo and i are (almost) parallel. */
                 if (numerator < 0.0f) {
                     return false;

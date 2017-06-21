@@ -215,7 +215,7 @@ namespace RVO {
      */
     size_t linearProgram2(const Line* lines, size_t numLines, float radius,
                           const Vector2 &optVelocity, bool directionOpt,
-                          Vector2 &result);
+                          Vector2 &result, uint id_=0);
 
     /**
      * \relates    Agent

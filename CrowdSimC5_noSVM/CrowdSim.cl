@@ -76,10 +76,12 @@ typedef struct __attribute__((packed)) __attribute__((aligned(16))) __StackNode
 
 __global StackNode* push (__global StackNode* stackNode, uchar retCode, float distSqLeft, float distSqRight, ushort node)
 {
-    stackNode->retCode = retCode;
-    stackNode->distSqLeft = distSqLeft;
-    stackNode->distSqRight = distSqRight;
-    stackNode->node = node;
+    StackNode s;
+    s.retCode = retCode;
+    s.distSqLeft = distSqLeft;
+    s.distSqRight = distSqRight;
+    s.node = node;
+    *stackNode = s;
     return stackNode + 1;
 }
 

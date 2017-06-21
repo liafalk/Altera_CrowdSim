@@ -121,6 +121,9 @@ namespace RVO {
 
                     line.direction = Vector2(unitW.y(), -unitW.x());
                     u = (combinedRadius * invTimeHorizon - wLength) * unitW;
+                    //if(id_==5) printf("relativePosition=(%f, %f) = (%f, %f) - (%f, %f)\n", relativePosition.x(), relativePosition.y(), other->position_.x(), other->position_.y(), position_.x(), position_.y());
+                    //if(id_==5) printf("relativeVelocity=(%f, %f) = (%f, %f) - (%f, %f)\n", relativeVelocity.x(), relativeVelocity.y(), velocity_.x(), velocity_.y(), other->velocity_.x(), other->velocity_.y());
+                    //if(id_==5) printf("u=(%f, %f), unitW=(%f, %f), wLength=%f\n", u.x(), u.y(), unitW.x(), unitW.y(), wLength);
                 }
                 else {
                     /* Project on legs. */
@@ -158,7 +161,10 @@ namespace RVO {
             orcaLines_[numOrcaLines_++] = line;
         }
 
-        size_t lineFail = linearProgram2(orcaLines_, numOrcaLines_, maxSpeed_, prefVelocity_, false, newVelocity_);
+        //if (id_ == 40) printf("[%d] %d, %f, (%f,%f), (%f,%f)\n", id_, numOrcaLines_, maxSpeed_, prefVelocity_.x(), prefVelocity_.y(), newVelocity_.x(), newVelocity_.y());
+        size_t lineFail = linearProgram2(orcaLines_, numOrcaLines_, maxSpeed_, prefVelocity_, false, newVelocity_, id_);
+
+        //if (id_ == 40) printf("lineFail=%d, newVelocity=(%f, %f)\n", lineFail, newVelocity_.x(), newVelocity_.y());
 
         if (lineFail < numOrcaLines_) {
             linearProgram3(orcaLines_, numOrcaLines_, numObstLines, lineFail, maxSpeed_, newVelocity_, projLines_);
@@ -231,7 +237,7 @@ namespace RVO {
         projLines_ = new Line[numOrcaLines];
     }
 
-    bool linearProgram1(const Line* lines, size_t lineNo, float radius, const Vector2 &optVelocity, bool directionOpt, Vector2 &result)
+    bool linearProgram1(const Line* lines, size_t lineNo, float radius, const Vector2 &optVelocity, bool directionOpt, Vector2 &result, uint id_)
     {
         const float dotProduct = lines[lineNo].point * lines[lineNo].direction;
         const float discriminant = sqr(dotProduct) + sqr(radius) - absSq(lines[lineNo].point);
@@ -245,11 +251,14 @@ namespace RVO {
         float tLeft = -dotProduct - sqrtDiscriminant;
         float tRight = -dotProduct + sqrtDiscriminant;
 
+        //if(id_==40) printf("[lineNo=%d] (%f, %f), (%f, %f), %f\n", lineNo, lines[lineNo].point.x(), lines[lineNo].point.y(), lines[lineNo].direction.x(), lines[lineNo].direction.y(), radius);
+        //if(id_==40) printf("%f, %f, %f, %f, %f\n", dotProduct, discriminant, sqrtDiscriminant, tLeft, tRight);
+
         for (size_t i = 0; i < lineNo; ++i) {
             const float denominator = det(lines[lineNo].direction, lines[i].direction);
             const float numerator = det(lines[i].direction, lines[lineNo].point - lines[i].point);
 
-            if (std::fabs(denominator) <= RVO_EPSILON) {
+            if ((float)std::fabs(denominator) <= RVO_EPSILON) {
                 /* Lines lineNo and i are (almost) parallel. */
                 if (numerator < 0.0f) {
                     return false;
@@ -304,7 +313,7 @@ namespace RVO {
         return true;
     }
 
-    size_t linearProgram2(const Line* lines, size_t numLines, float radius, const Vector2 &optVelocity, bool directionOpt, Vector2 &result)
+    size_t linearProgram2(const Line* lines, size_t numLines, float radius, const Vector2 &optVelocity, bool directionOpt, Vector2 &result, uint id_)
     {
         if (directionOpt) {
             /*
@@ -321,14 +330,15 @@ namespace RVO {
             /* Optimize closest point and inside circle. */
             result = optVelocity;
         }
-
+        //if (id_ == 40) printf("result1=(%f,%f)\n", result.x(), result.y());
         for (size_t i = 0; i < numLines; ++i) {
             if (det(lines[i].direction, lines[i].point - result) > 0.0f) {
                 /* Result does not satisfy constraint i. Compute new optimal result. */
                 const Vector2 tempResult = result;
 
-                if (!linearProgram1(lines, i, radius, optVelocity, directionOpt, result)) {
+                if (!linearProgram1(lines, i, radius, optVelocity, directionOpt, result, id_)) {
                     result = tempResult;
+                    //if (id_ == 40) printf("result2=(%f,%f)\n", result.x(), result.y());
                     return i;
                 }
             }

@@ -339,10 +339,10 @@ namespace RVO {
         printf("primitiveAgentNeighbor created (%d).\n", err);
     }
 
-#define DEBUGON 1
+#define DEBUGON 0
     void RVOSimulator::doStep_NoSVM()
     {
-        std::cout << "[ INFO ] Begin step\n";
+        if(DEBUGON) std::cout << "[ INFO ] Begin step\n";
         double simStartStamp = 0, simBuildAgentTreeStamp = 0, simVelocitiesStamp = 0;
 
         kdTree_->buildAgentTree();
@@ -357,10 +357,10 @@ namespace RVO {
             cl_int err = CL_SUCCESS;
             
             for(int i=0; i<numAgents; ++i){
-                primitiveAgents[i].numAgentNeighbors_ = (cl_uchar) 0;
+                primitiveAgents[i].numAgentNeighbors_ = 0;
                 primitiveAgents[i].position_ = {agents_[i]->position_.x(), agents_[i]->position_.y()};
                 primitiveAgents[i].velocity_ = {agents_[i]->velocity_.x(), agents_[i]->velocity_.y()};
-                primitiveAgents[i].id_ = (cl_ushort) agents_[i]->id_;
+                primitiveAgents[i].id_ = agents_[i]->id_;
                 primitiveAgentsForTree[i] = kdTree_->agents_[i]->id_;
             }
 
@@ -398,15 +398,15 @@ namespace RVO {
                 std::cout << "[ INFO ] Created stackBuffer\n";
 
                 // create dummy pointer to trick AOCL to support custom SVM code
-                dummy_p0 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(int), NULL, &err);
+                dummy_p0 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(cl_uint)*16, NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created dummy_p0\n";
 
-                dummy_p1 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(int), NULL, &err);
+                dummy_p1 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(cl_uint)*16, NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created dummy_p1\n";
 
-                dummy_p2 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(int), NULL, &err);
+                dummy_p2 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(cl_uint)*16, NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created dummy_p2\n";
 
@@ -427,7 +427,11 @@ namespace RVO {
                 */
             }
 
-            std::cout << "[ INFO ] Assigning kernel arguments\n";
+            err = clFinish(oclobjects_->queue);
+            SAMPLE_CHECK_ERRORS(err);
+            
+            if(DEBUGON) std::cout << "[ INFO ] Assigning kernel arguments\n";
+
             err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
             
@@ -451,8 +455,8 @@ namespace RVO {
             SAMPLE_CHECK_ERRORS(err);
 
             cl_uint svm_treeBuffer_ptr = (cl_uint)&kdTree_->agentTree_[0];
-            printf("Setting treeBuffer_ptr = %p (size=%dB)\n", (void*)svm_treeBuffer_ptr, sizeof(svm_treeBuffer_ptr));
-            err = clSetKernelArg(kernelComputeNewVelocity_, 5, sizeof(cl_uint), (void*)&svm_treeBuffer_ptr);
+            if(DEBUGON) printf("Setting treeBuffer_ptr = %p (size=%dB)\n", (void*)svm_treeBuffer_ptr, sizeof(svm_treeBuffer_ptr));
+            err = clSetKernelArg(kernelComputeNewVelocity_, 5, sizeof(svm_treeBuffer_ptr), &svm_treeBuffer_ptr);
             SAMPLE_CHECK_ERRORS(err);
 
             err = clSetKernelArg(kernelComputeNewVelocity_, 6, sizeof(cl_mem), &dummy_p0);
@@ -488,6 +492,9 @@ namespace RVO {
                 std::cout.flush();
             }
 
+            err = clFinish(oclobjects_->queue);
+            SAMPLE_CHECK_ERRORS(err);
+
             if(DEBUGON)
             {
                 std::cout << "[ INFO ] After clFinish.\n";
@@ -501,7 +508,7 @@ namespace RVO {
             err =  clEnqueueReadBuffer(oclobjects_->queue, agentNeighborBuffer, CL_TRUE, 0, primitiveAgentNeighbor_size, &primitiveAgentNeighbor[0], 0, NULL, NULL);
             SAMPLE_CHECK_ERRORS(err);
 
-            std::cout << "[ INFO ] Read successful, copying to local data structures\n";
+            if(DEBUGON) std::cout << "[ INFO ] Read successful, copying to local data structures\n";
             unsigned maxNeighbors = defaultAgent_->maxNeighbors_;
             for(int i=0; i<agents_.size(); ++i){
                 agents_[i]->numAgentNeighbors_ = primitiveAgents[i].numAgentNeighbors_;
@@ -512,11 +519,14 @@ namespace RVO {
                     }
             }
 
-            std::cout << "[ INFO ] Launching computeNewVelocity and update \n";
+            if(DEBUGON) std::cout << "[ INFO ] Launching computeNewVelocity and update \n";
             for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
                 agents_[i]->computeNewVelocity();
+            }
+            for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
                 agents_[i]->update();
             }
+
 
             if(DEBUGON)
             {

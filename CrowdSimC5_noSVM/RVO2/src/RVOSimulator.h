@@ -110,7 +110,7 @@ namespace RVO {
         ushort second;
     } AgentNeighborBuf;
 
-    typedef struct __StackNode
+    typedef struct __attribute__((packed)) __attribute__((aligned(16))) __StackNode
     {
         cl_uchar retCode;
         cl_float distSqLeft;
