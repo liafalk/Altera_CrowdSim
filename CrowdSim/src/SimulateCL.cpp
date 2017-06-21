@@ -18,9 +18,7 @@
 // Intel Corporation is the author of the Materials, and requests that all
 // problem reports or change requests be submitted to it directly
 
-#ifdef ENABLE_PNG
-#include "pngwriter.h"
-#endif
+#include "bitmap_image.hpp"
 
 #include <stdio.h>
 #include <cstdio>
