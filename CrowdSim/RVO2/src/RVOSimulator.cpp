@@ -564,13 +564,6 @@ namespace RVO {
             err = clSetKernelArg(kernelUpdate_, 1, sizeof(timeStep_), &timeStep_);
             SAMPLE_CHECK_ERRORS(err);
 
-            if(customUpdateBuffer_)
-            {
-                // If a custom version of update kernel is used, then there is the third argument in that kernel and
-                // it should be set to the customUpdateBuffer
-                err = clSetKernelArg(kernelUpdate_, 2, sizeof(customUpdateBuffer_), &customUpdateBuffer_);
-                SAMPLE_CHECK_ERRORS(err);
-            }
 
             if(DEBUGON)
             {
@@ -616,6 +609,9 @@ namespace RVO {
             }*/
             
             err =  clEnqueueReadBuffer(oclobjects_->queue, agentsBuffer, CL_TRUE, 0, newAgentsBufferSize, &primitiveAgents[0], 0, NULL, NULL);
+            SAMPLE_CHECK_ERRORS(err);
+
+            err = clFinish(oclobjects_->queue);
             SAMPLE_CHECK_ERRORS(err);
 
             for(int i=0; i<agents_.size(); ++i){
