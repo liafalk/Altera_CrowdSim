@@ -37,7 +37,7 @@ public:
     CmdOption<size_t> iterations;
     CmdOption<bool> no_graphics;
     CmdOption<bool> no_opencl;
-
+    CmdOption<bool> enable_video;
 #ifdef INTEL_NOT_FOR_RELEASE
     CmdOption<bool> validation;
 #endif

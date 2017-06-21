@@ -396,19 +396,20 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
     double endSimTime = time_stamp();
     *pKernelTime = endSimTime - startSimTime;
 
-#ifdef ENABLE_PNG
-    pngwriter canvas(400,400,1.0, std::string("output/" + std::to_string(iteration) + ".png").c_str());
-    for (int i=0; i<crowd_sim->getNumAgents(); ++i){
-        canvas.filledcircle(crowd_sim->getAgentPosition(i).x()+200, crowd_sim->getAgentPosition(i).y()+200, 1,65535,0,0);
-        #ifdef DEBUG_PRINT_ALL_AGENTS
-        int TESTID = i;
-        printf("Agent %d's current position = (%f,%f) at time %f - Goal at (%f, %f) - Velocity = (%f, %f)\n", TESTID, crowd_sim->getAgentPosition(TESTID).x(), crowd_sim->getAgentPosition(TESTID).y(), 
-            crowd_sim->getGlobalTime(), goals[TESTID].x(), goals[TESTID].y(), crowd_sim->getAgentVelocity(TESTID).x(), crowd_sim->getAgentVelocity(TESTID).y());
-        #endif
+    if(cmdparser->enable_video.getValue()))
+    {
+        cartesian_canvas canvas(399,399);
+        canvas.image().clear(255);
+        canvas.pen_width(3);
+        canvas.pen_color(255, 0, 0);
+        canvas.fill_circle(255,0,0);
+        
+        for (int i=0; i<crowd_sim->getNumAgents(); ++i){
+            canvas.circle(crowd_sim->getAgentPosition(i).x(),crowd_sim->getAgentPosition(i).y(),1);
+        }
+        canvas.image().save_image("output/" + std::to_string(iteration) + ".bmp");
     }
-    canvas.close();
-#endif
-
+    
     bool ret = !reachedGoal(crowd_sim);
 
     if(!ret)
