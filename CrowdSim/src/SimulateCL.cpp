@@ -396,7 +396,7 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
     double endSimTime = time_stamp();
     *pKernelTime = endSimTime - startSimTime;
 
-    if(cmdparser->enable_video.getValue()))
+    if(cmdparser->enable_video.getValue())
     {
         cartesian_canvas canvas(399,399);
         canvas.image().clear(255);
