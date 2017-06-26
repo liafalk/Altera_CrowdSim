@@ -99,11 +99,16 @@ AgentTreeNode vector_2_AgentTreeNode(uint16 v) {
     tn.begin    = v.s0;
     tn.end      = v.s1;
     tn.left     = v.s2;
-    tn.maxX     = (float)v.s3;
-    tn.maxY     = (float)v.s4;
-    tn.minX     = (float)v.s5;
-    tn.minY     = (float)v.s6;
+    uint v3 = v.s3;
+    tn.maxX     = *((float*)&v3);
+    uint v4 = v.s4;
+    tn.maxY     = *((float*)&v4);
+    uint v5 = v.s5;
+    tn.minX     = *((float*)&v5);
+    uint v6 = v.s6;
+    tn.minY     = *((float*)&v6);
     tn.right    = v.s7;
+    
 
     return tn;
 }

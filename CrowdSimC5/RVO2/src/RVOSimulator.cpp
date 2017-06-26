@@ -385,9 +385,11 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentNeighborBuffer\n";
 
+                /*
                 treeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created treeBuffer\n";
+                */
 
                 agentsForTreeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
@@ -420,9 +422,11 @@ namespace RVO {
                 
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsForTreeBuffer, CL_TRUE, 0, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
-                         
+                      
+                /*   
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, treeBuffer, CL_TRUE, 0, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
+                */
                 
             }
 
@@ -434,20 +438,22 @@ namespace RVO {
             err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
             
+            /*
             err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(cl_mem), &treeBuffer);
             SAMPLE_CHECK_ERRORS(err);        
+            */
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(cl_mem), &agentNeighborBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(cl_mem), &agentNeighborBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(cl_mem), &agentsForTreeBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(cl_mem), &agentsForTreeBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 4, sizeof(cl_mem), &stackBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(cl_mem), &stackBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 5, sizeof(cl_uint), &ttbr0_value);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 4, sizeof(cl_uint), &ttbr0_value);
             SAMPLE_CHECK_ERRORS(err);
 
             cl_uint svm_treeBuffer_ptr = (cl_uint)&kdTree_->agentTree_[0];
@@ -479,16 +485,16 @@ namespace RVO {
                 n.maxY, n.minX, n.minY, n.right);
             }
             #endif
-            err = clSetKernelArg(kernelComputeNewVelocity_, 6, sizeof(cl_uint), (void*)&svm_treeBuffer_ptr);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 5, sizeof(cl_uint), (void*)&svm_treeBuffer_ptr);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 7, sizeof(cl_mem), &dummy_p0);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 6, sizeof(cl_mem), &dummy_p0);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 8, sizeof(cl_mem), &dummy_p1);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 7, sizeof(cl_mem), &dummy_p1);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 9, sizeof(cl_mem), &dummy_p2);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 8, sizeof(cl_mem), &dummy_p2);
             SAMPLE_CHECK_ERRORS(err);
 
             size_t global_size = agents_.size();
