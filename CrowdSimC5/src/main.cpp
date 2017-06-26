@@ -157,7 +157,7 @@ int main (int argc, const char** argv)
                 if(kernelTime > worst) worst = kernelTime;
                 totalKernel += kernelTime;
                 iteration++;
-                printf("[ INFO ] Step %d of simulation was executed.\n", (int)iteration);
+                printf("[ INFO ] Step %d of simulation was executed. Frame time = %f, avg = %f, worst = %f\n", iteration, kernelTime, totalKernel/(double)iteration, worst);
 
                 cout.flush();
                 //std::cin.ignore();

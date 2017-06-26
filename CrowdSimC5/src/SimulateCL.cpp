@@ -396,8 +396,6 @@ bool SimulateCL::StepNoGraphics(double *pKernelTime, int iteration)
     crowd_sim->doStep_NoSVM();
     double endSimTime = time_stamp();
     *pKernelTime = endSimTime - startSimTime;
-
-    
     
     #define DEBUG_PRINT 1
     #if DEBUG_PRINT == 1
