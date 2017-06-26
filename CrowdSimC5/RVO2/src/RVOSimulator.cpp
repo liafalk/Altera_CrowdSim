@@ -135,10 +135,9 @@ namespace RVO {
             //kernelUpdate_ = (*openCLProgram_)[customUpdateBuffer_ ? "updateCustom" : "update"];
 
             // Custom SVM setup
-            //enable_f2h_acp(true);       // set flag to enable ACP on Cyclone V
+            enable_f2h_acp(true);       // set flag to enable ACP on Cyclone V
             ttbr0_value = get_ttbr0();  // get address of Linux page table 
-        }
-
+        }   
         kdTree_ = new KdTree(this);
     }
 
@@ -197,6 +196,9 @@ namespace RVO {
         delete kdTree_;
         delete openCLProgram_;
 
+        free(primitiveAgentsForTree);
+        free(primitiveAgentNeighbor);
+        free(primitiveAgents);
         /*
         if(agentsBufferSize_ > 0)
         {
@@ -383,11 +385,9 @@ namespace RVO {
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created agentNeighborBuffer\n";
 
-                /*
                 treeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created treeBuffer\n";
-                */
 
                 agentsForTreeBuffer = clCreateBuffer(oclobjects_->context, CL_MEM_COPY_HOST_PTR, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], &err);
                 SAMPLE_CHECK_ERRORS(err);
@@ -398,15 +398,15 @@ namespace RVO {
                 std::cout << "[ INFO ] Created stackBuffer\n";
 
                 // create dummy pointer to trick AOCL to support custom SVM code
-                dummy_p0 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(cl_uint)*16, NULL, &err);
+                dummy_p0 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(cl_uint), NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created dummy_p0\n";
 
-                dummy_p1 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(cl_uint)*16, NULL, &err);
+                dummy_p1 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(cl_uint), NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created dummy_p1\n";
 
-                dummy_p2 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(cl_uint)*16, NULL, &err);
+                dummy_p2 = clCreateBuffer(oclobjects_->context, CL_MEM_WRITE_ONLY, sizeof(cl_uint), NULL, &err);
                 SAMPLE_CHECK_ERRORS(err);
                 std::cout << "[ INFO ] Created dummy_p2\n";
 
@@ -420,56 +420,78 @@ namespace RVO {
                 
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, agentsForTreeBuffer, CL_TRUE, 0, sizeof(unsigned)*numAgents, &primitiveAgentsForTree[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
-                       
-                /*   
+                         
                 err =  clEnqueueWriteBuffer(oclobjects_->queue, treeBuffer, CL_TRUE, 0, sizeof(KdTree::AgentTreeNode)*kdTree_->treeSize, &kdTree_->agentTree_[0], 0, NULL, NULL);
                 SAMPLE_CHECK_ERRORS(err);
-                */
+                
             }
 
             err = clFinish(oclobjects_->queue);
             SAMPLE_CHECK_ERRORS(err);
-            
+
             if(DEBUGON) std::cout << "[ INFO ] Assigning kernel arguments\n";
 
             err = clSetKernelArg(kernelComputeNewVelocity_, 0, sizeof(cl_mem), &agentsBuffer);
             SAMPLE_CHECK_ERRORS(err);
             
-            /*
             err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(cl_mem), &treeBuffer);
-            SAMPLE_CHECK_ERRORS(err);
-            */
-        
+            SAMPLE_CHECK_ERRORS(err);        
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 1, sizeof(cl_mem), &agentNeighborBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(cl_mem), &agentNeighborBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 2, sizeof(cl_mem), &agentsForTreeBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(cl_mem), &agentsForTreeBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 3, sizeof(cl_mem), &stackBuffer);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 4, sizeof(cl_mem), &stackBuffer);
             SAMPLE_CHECK_ERRORS(err);
 
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 4, sizeof(cl_uint), &ttbr0_value);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 5, sizeof(cl_uint), &ttbr0_value);
             SAMPLE_CHECK_ERRORS(err);
 
             cl_uint svm_treeBuffer_ptr = (cl_uint)&kdTree_->agentTree_[0];
-            if(DEBUGON) printf("Setting treeBuffer_ptr = %p (size=%dB)\n", (void*)svm_treeBuffer_ptr, sizeof(svm_treeBuffer_ptr));
-            err = clSetKernelArg(kernelComputeNewVelocity_, 5, sizeof(svm_treeBuffer_ptr), &svm_treeBuffer_ptr);
+            #if DEBUGON == 1
+            printf("Setting treeBuffer_ptr = %p (size=%dB)\n", (void*)svm_treeBuffer_ptr, sizeof(svm_treeBuffer_ptr));
+            for(int i=0; i<2; ++i){
+                unsigned* s = (unsigned*)(svm_treeBuffer_ptr+sizeof(KdTree::AgentTreeNode)*i);
+                printf("begin: %d\n"
+                "end: %d\n"
+                "left: %d\n"
+                "maxX: %f\n"
+                "maxY: %f\n"
+                "minX: %f\n"
+                "minY: %f\n"
+                "right: %d\n\n", 
+                s[0], s[1], s[2], s[3],
+                s[4], s[5], s[6], s[7]);
+
+                KdTree::AgentTreeNode n = *((KdTree::AgentTreeNode*)svm_treeBuffer_ptr+1);
+                printf("begin: %d\n"
+                "end: %d\n"
+                "left: %d\n"
+                "maxX: %f\n"
+                "maxY: %f\n"
+                "minX: %f\n"
+                "minY: %f\n"
+                "right: %d\n\n", 
+                n.begin, n.end, n.left, n.maxX,
+                n.maxY, n.minX, n.minY, n.right);
+            }
+            #endif
+            err = clSetKernelArg(kernelComputeNewVelocity_, 6, sizeof(cl_uint), (void*)&svm_treeBuffer_ptr);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 6, sizeof(cl_mem), &dummy_p0);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 7, sizeof(cl_mem), &dummy_p0);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 7, sizeof(cl_mem), &dummy_p1);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 8, sizeof(cl_mem), &dummy_p1);
             SAMPLE_CHECK_ERRORS(err);
 
-            err = clSetKernelArg(kernelComputeNewVelocity_, 8, sizeof(cl_mem), &dummy_p2);
+            err = clSetKernelArg(kernelComputeNewVelocity_, 9, sizeof(cl_mem), &dummy_p2);
             SAMPLE_CHECK_ERRORS(err);
 
             size_t global_size = agents_.size();
-
 
             if(DEBUGON)
             {
@@ -486,6 +508,12 @@ namespace RVO {
             );
             SAMPLE_CHECK_ERRORS(err);
 
+/*
+            size_t wkgrp_size;
+            err = clGetKernelWorkGroupInfo(kernelComputeNewVelocity_, NULL, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(size_t), &wkgrp_size, NULL);
+            SAMPLE_CHECK_ERRORS(err);
+            printf("Work group size=%zu\n", wkgrp_size);
+*/
             if(DEBUGON)
             {
                 std::cout << "[ INFO ] After kernelComputeNewVelocity kernel enqueue.\n";

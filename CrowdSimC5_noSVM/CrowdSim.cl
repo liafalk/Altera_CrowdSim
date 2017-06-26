@@ -106,6 +106,7 @@ void computeNewVelocity(__global Agent* agents, __global AgentTreeNode* agentTre
         switch(retCode) 
         {
             case 0:
+                if(get_global_id(0)==40) printf("Checking (%d - %d) <= %d\n", currentTreeNode.end, currentTreeNode.begin, RVO_MAX_LEAF_SIZE);                  
                 if (currentTreeNode.end - currentTreeNode.begin <= RVO_MAX_LEAF_SIZE) {                    
                     for (uint i = currentTreeNode.begin; i < currentTreeNode.end; ++i) {
                         Agent nearAgent = agents[agentsForTree[i]];

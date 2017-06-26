@@ -124,8 +124,8 @@ namespace RVO {
                 free(agents_);
                 delete [] agentTree_;
                 agents_ = (Agent**)malloc(sizeof(Agent*)*numAgents_);
-                //agentTree_ = new AgentTreeNode[numAgentTreeNodes];
-                printf("agentTree_ created (%d).\n", posix_memalign((void**)&agentTree_, 64, numAgentTreeNodes*sizeof(AgentTreeNode)));
+                agentTree_ = new AgentTreeNode[numAgentTreeNodes];
+                //printf("agentTree_ created (%d).\n", posix_memalign((void**)&agentTree_, 64, numAgentTreeNodes*sizeof(AgentTreeNode)));
             }
 
             for (size_t i = 0; i < sim_->agents_.size(); ++i) {
