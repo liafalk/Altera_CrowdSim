@@ -145,6 +145,10 @@ int main (int argc, const char** argv)
             int iteration = 0;
             double totalKernel = 0.0, worst=0.0;
 
+            double measurements[100];
+            unsigned idx = 0;
+            bool val = false;
+
             while(cmdparser.iterations.getValue() == 0 || iteration < int(cmdparser.iterations.getValue()))
             {
                 // Do one step of simulations
@@ -153,11 +157,27 @@ int main (int argc, const char** argv)
                     // if we've done (agents arrived to their final positions), then stop
                     break;
                 }
-                
+
                 if(kernelTime > worst) worst = kernelTime;
                 totalKernel += kernelTime;
                 iteration++;
-                printf("[ INFO ] Step %d of simulation was executed. Frame time = %f, avg = %f, worst = %f\n", iteration, kernelTime, totalKernel/(double)iteration, worst);
+                
+                measurements[idx++] = kernelTime;
+                if (idx >= 100){
+                    idx = 0;
+                    val = true;
+                }
+
+                if(val){
+                    double avg = 0;
+                    for (int i=0; i<100; ++i){
+                        avg += measurements[i];
+                    }
+                    avg /= 100;
+                    printf("[ INFO ] Step %d of simulation was executed. Frame time = %f, avg = %f, worst = %f\n", iteration, 1000*kernelTime, 1000*avg, 1000*worst);
+                }else{
+                    printf("[ INFO ] Step %d of simulation was executed.\n", iteration);
+                }
 
                 cout.flush();
                 //std::cin.ignore();

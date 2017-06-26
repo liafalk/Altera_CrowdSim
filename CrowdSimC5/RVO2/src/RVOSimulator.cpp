@@ -85,54 +85,10 @@ namespace RVO {
     {
         if(oclobjects_ && cmdparser_)
         {
-            //svmAllocator = new SVMAllocator(oclobjects_->context);
-
             string exeDir = exe_dir();
-
-/*
-            #ifdef INTEL_NOT_FOR_RELEASE
-            openCLProgram_ = new OpenCLProgramMultipleKernels(
-                *oclobjects_,
-                L"CrowdSim.cl",
-                "",
-                //std::string("-I. -I\"") + exeDir + "\"" +
-				//std::string(" -I\"D:\\Intel\\OpenCL SDK\\6.3\\include\\\"") +
-                //std::string(" -cl-std=CL1.2") +
-                    (
-                        cmdparser_->interactiveDiagnostics.getValue() || cmdparser_->kernelNeighborsTraverseDiagnostics.getValue() ?
-                        " -D INTEL_NOT_FOR_RELEASE_DIAGNOSTICS" :
-                        ""
-                    ) +
-                    (
-                        cmdparser_->queryAgentTreeStopAfterIteration.getValue() ?
-                        " -D INTEL_NOT_FOR_RELEASE_QUERY_AGENT_TREE_STOP_AFTER_ITERATION=" + to_str(cmdparser_->queryAgentTreeStopAfterIteration.getValue()) :
-                        std::string()
-                    ) +
-                    (
-                        cmdparser_->kernelVelocityDiagnostics.getValue() ?
-                        " -D INTEL_NOT_FOR_RELEASE_VELOCITY_DIAGNOSTICS" :
-                        std::string()
-                    ) +
-                    (
-                        cmdparser_->force_c_neighbors_kernel.getValue() ?
-                        " -D FORCE_C_NEIGHBORS_KERNEL" :
-                        std::string()
-                    ) +
-                    (
-                        cmdparser_->force_c_velocity_kernel.getValue() ?
-                        " -D FORCE_C_VELOCITY_KERNEL" :
-                        std::string()
-                    )
-            );
-            #else
-*/
-            //openCLProgram_ = new OpenCLProgramMultipleKernels(*oclobjects_, L"CrowdSim_OG.cl", "", "-I \"" + exeDir + "\" -cl-std=CL2.0");
             openCLProgram_ = new OpenCLProgramMultipleKernels(*oclobjects_, L"CrowdSim.cl", "", "-I \"" + exeDir + "\" -cl-std=CL1.2");
 
-//            #endif
-
             kernelComputeNewVelocity_ = (*openCLProgram_)["computeNewVelocity"];
-            //kernelUpdate_ = (*openCLProgram_)[customUpdateBuffer_ ? "updateCustom" : "update"];
 
             // Custom SVM setup
             enable_f2h_acp(true);       // set flag to enable ACP on Cyclone V
@@ -574,14 +530,7 @@ namespace RVO {
                 agents_[i]->computeNeighbors();
                 agents_[i]->computeNewVelocity();
             }
-
-            #ifdef INTEL_NOT_FOR_RELEASE
-            if(cmdparser_->advanced_perf_measurements.getValue())
-            {
-                simVelocitiesStamp = time_stamp();
-            }
-            #endif
-
+            
             for (int i = 0; i < static_cast<int>(agents_.size()); ++i) {
                 agents_[i]->update();
             }
