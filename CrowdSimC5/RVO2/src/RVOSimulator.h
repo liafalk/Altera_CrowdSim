@@ -686,12 +686,12 @@ namespace RVO {
 
         // Modified OpenCL1.x buffers
         cl_mem agentsBuffer;
-        //cl_mem treeBuffer;
+        cl_mem treeBuffer;
         cl_mem agentNeighborBuffer;
         cl_mem orcaLineBuffer;
         cl_mem projBuffer;
         cl_mem agentsForTreeBuffer;
-        cl_mem stackBuffer;
+        //cl_mem stackBuffer;
 
         address_t ttbr0_value; // address of Linux page table
         cl_mem dummy_p0;       // create dummy pointer to trick AOCL to support custom SVM code

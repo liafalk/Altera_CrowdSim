@@ -68,7 +68,7 @@ typedef struct __attribute__((packed)) __attribute__((aligned(16))) __StackNode
     ushort node;
 } StackNode;
 
-__global StackNode* push (__global StackNode* restrict stackNode, uchar retCode, float distSqLeft, float distSqRight, ushort node)
+StackNode* push (StackNode* stackNode, uchar retCode, float distSqLeft, float distSqRight, ushort node)
 {
     StackNode s;
     s.retCode = retCode;
@@ -115,10 +115,12 @@ AgentTreeNode vector_2_AgentTreeNode(uint16 v) {
 
 
 __kernel
-void computeNewVelocity(__global Agent* agents,
-                        __global AgentNeighborBuf* agentNeighbors,
-                        __global unsigned* agentsForTree,
-                        __global StackNode* restrict stack,
+void computeNewVelocity(__global Agent* restrict agents,
+                        __global AgentTreeNode* restrict agentTree_,
+                        __global AgentNeighborBuf* restrict agentNeighbors,
+                        __global unsigned* restrict agentsForTree,
+                        //__global StackNode* restrict stack,
+                        uint num_agents,
                         svm_pointer_t ttbr0,                        // address of the page table entry
                         svm_pointer_t svm_agentTree_,               // the svm version of the above pointer
                         __global int* restrict dummy_p0,             // dummy pointer used to trick AOCL to support custom SVM code
@@ -126,162 +128,171 @@ void computeNewVelocity(__global Agent* agents,
                         __global int* restrict dummy_p2              // dummy pointer used to trick AOCL to support custom SVM code
                     )
 {
-    Agent agent = agents[get_global_id(0)];
+    for (uint aidx = 0; aidx < num_agents; aidx++) {
+        Agent agent = agents[aidx];
 
-    //Agent agent = toAgent( host_memory_bridge_ld_512bit(dummy_p0, ttbr0, svm_agents_ + sizeof(Agent)*node) );
+        //Agent agent = toAgent( host_memory_bridge_ld_512bit(dummy_p0, ttbr0, svm_agents_ + sizeof(Agent)*node) );
 
-    __global StackNode* restrict stackTop = &stack[get_global_id(0)*MAX_KDTREE_DEPTH];
-    
-    
-    float rangeSq = 225.0f;
-    ushort node = 0;
-    uchar retCode = 0;
-
-    float distSqLeft;
-    float distSqRight;
-
-    for(;;)
-    {
-        //const AgentTreeNode currentTreeNode = agentTree_[node];
+        StackNode stack[MAX_KDTREE_DEPTH];
+        StackNode* stackTop = &stack[0];
         
-        // svm read access (reading one tree node at pointer svm_agentTree_)
         
-        const AgentTreeNode svm_currentTreeNode = vector_2_AgentTreeNode(
-            host_memory_bridge_ld_512bit (dummy_p0, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*node)
-        );
-  
-        ushort nodeStored;
-        uchar retcodeStored = 0;
-        switch(retCode) 
+        float rangeSq = 225.0f;
+        ushort node = 0;
+        uchar retCode = 0;
+
+        float distSqLeft;
+        float distSqRight;
+
+        for(;;)
         {
-            case 0:
-                if (svm_currentTreeNode.end - svm_currentTreeNode.begin <= RVO_MAX_LEAF_SIZE) {                    
-                    for (uint i = svm_currentTreeNode.begin; i < svm_currentTreeNode.end; ++i) {
-                        Agent nearAgent = agents[agentsForTree[i]];
-                        //Agent nearAgent = toAgent( host_memory_bridge_ld_512bit(dummy_p0, ttbr0, svm_agents_ + sizeof(Agent)*agentsForTree[i]) );
-                        if (agent.id_ != nearAgent.id_) {
+            const AgentTreeNode svm_currentTreeNode = agentTree_[node];
+            
+            // svm read access (reading one tree node at pointer svm_agentTree_)
+            /*
+            const AgentTreeNode svm_currentTreeNode = vector_2_AgentTreeNode(
+                host_memory_bridge_ld_512bit (dummy_p0, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*node)
+            );
+            */
+      
+            ushort nodeStored;
+            uchar retcodeStored = 0;
+            switch(retCode) 
+            {
+                case 0:
+                    if (svm_currentTreeNode.end - svm_currentTreeNode.begin <= RVO_MAX_LEAF_SIZE) {                    
+                        for (uint i = svm_currentTreeNode.begin; i < svm_currentTreeNode.end; ++i) {
+                            Agent nearAgent = agents[agentsForTree[i]];
+                            //Agent nearAgent = toAgent( host_memory_bridge_ld_512bit(dummy_p0, ttbr0, svm_agents_ + sizeof(Agent)*agentsForTree[i]) );
+                            if (agent.id_ != nearAgent.id_) {
 
-                            const float distSq = absSq(agent.position_ - nearAgent.position_);
-                            
-                            if (distSq < rangeSq) {
-                                const ushort indexBias = 10*get_global_id(0);
+                                const float distSq = absSq(agent.position_ - nearAgent.position_);
                                 
-                                if (agent.numAgentNeighbors_ < 10) {
+                                if (distSq < rangeSq) {
+                                    const ushort indexBias = 10*aidx;
                                     
-                                    agentNeighbors[indexBias + agent.numAgentNeighbors_].first = distSq;
-                                    agentNeighbors[indexBias + agent.numAgentNeighbors_].second = nearAgent.id_;
-                                    ++agent.numAgentNeighbors_;
+                                    if (agent.numAgentNeighbors_ < 10) {
+                                        
+                                        agentNeighbors[indexBias + agent.numAgentNeighbors_].first = distSq;
+                                        agentNeighbors[indexBias + agent.numAgentNeighbors_].second = nearAgent.id_;
+                                        ++agent.numAgentNeighbors_;
+                                    }
+
+                                    uchar i = agent.numAgentNeighbors_ - 1;
+    
+                                    #pragma ivdep
+                                    while (i != 0 && distSq < agentNeighbors[indexBias + i - 1].first) {
+                                        agentNeighbors[indexBias+i] = agentNeighbors[indexBias + i - 1];
+                                        --i;
+                                    }
+
+                                    agentNeighbors[indexBias+i].first = distSq;
+                                    agentNeighbors[indexBias+i].second = nearAgent.id_;
+
+                                    if (agent.numAgentNeighbors_ == 10) {
+                                        rangeSq = agentNeighbors[indexBias + agent.numAgentNeighbors_ - 1].first;
+                                    }
                                 }
-
-                                uchar i = agent.numAgentNeighbors_ - 1;
-
-                                while (i != 0 && distSq < agentNeighbors[indexBias + i - 1].first) {
-                                    agentNeighbors[indexBias+i] = agentNeighbors[indexBias + i - 1];
-                                    --i;
-                                }
-
-                                agentNeighbors[indexBias+i].first = distSq;
-                                agentNeighbors[indexBias+i].second = nearAgent.id_;
-
-                                if (agent.numAgentNeighbors_ == 10) {
-                                    rangeSq = agentNeighbors[indexBias + agent.numAgentNeighbors_ - 1].first;
-                                }
-                            }
-                            
-                        }
-                    }
-                    break;
-                }
-                else {
-                    //AgentTreeNode leftNode = agentTree_[svm_currentTreeNode.left];
-                    AgentTreeNode leftNode = vector_2_AgentTreeNode(
-                        host_memory_bridge_ld_512bit(dummy_p1, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*svm_currentTreeNode.left)
-                    );
-
-                    distSqLeft =
-                        sqr(max(0.0f, leftNode.minX - agent.position_.x)) +
-                        sqr(max(0.0f, agent.position_.x - leftNode.maxX)) +
-                        sqr(max(0.0f, leftNode.minY - agent.position_.y)) +
-                        sqr(max(0.0f, agent.position_.y - leftNode.maxY));
-
-                   // AgentTreeNode rightNode = agentTree_[svm_currentTreeNode.right];
-                    AgentTreeNode rightNode = vector_2_AgentTreeNode(
-                        host_memory_bridge_ld_512bit(dummy_p2, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*svm_currentTreeNode.right)
-                    );
-                    
-                    distSqRight =
-                        sqr(max(0.0f, rightNode.minX - agent.position_.x)) +
-                        sqr(max(0.0f, agent.position_.x - rightNode.maxX)) +
-                        sqr(max(0.0f, rightNode.minY - agent.position_.y)) +
-                        sqr(max(0.0f, agent.position_.y - rightNode.maxY));
-                    
-                    if (distSqLeft < distSqRight) {
-                        if (distSqLeft < rangeSq) {
-                            //stackTop = push(stackTop, 1, distSqLeft, distSqRight, node); 
-                            nodeStored = node;
-                            retcodeStored = 1;
-                            node = svm_currentTreeNode.left; 
-                            retCode = 0;
-                            break;
-
-            case 1:
-
-                            if (distSqRight < rangeSq) {
-                                //stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
-                                nodeStored = node;
-                                retcodeStored = 3;
-                                node = svm_currentTreeNode.right; 
-                                retCode = 0;
-                                break;
+                                
                             }
                         }
+                        break;
                     }
                     else {
-                        if (distSqRight < rangeSq) {
-                            //stackTop = push(stackTop, 2, distSqLeft, distSqRight, node); 
-                            nodeStored = node;
-                            retcodeStored = 2;
-                            node = svm_currentTreeNode.right; 
-                            retCode = 0;
-                            break;
-            case 2:
+                        AgentTreeNode leftNode = agentTree_[svm_currentTreeNode.left];
+                        /*
+                        AgentTreeNode leftNode = vector_2_AgentTreeNode(
+                            host_memory_bridge_ld_512bit(dummy_p1, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*svm_currentTreeNode.left)
+                        );
+                        */
 
+                        distSqLeft =
+                            sqr(max(0.0f, leftNode.minX - agent.position_.x)) +
+                            sqr(max(0.0f, agent.position_.x - leftNode.maxX)) +
+                            sqr(max(0.0f, leftNode.minY - agent.position_.y)) +
+                            sqr(max(0.0f, agent.position_.y - leftNode.maxY));
+
+                        AgentTreeNode rightNode = agentTree_[svm_currentTreeNode.right];
+                        /*
+                        AgentTreeNode rightNode = vector_2_AgentTreeNode(
+                            host_memory_bridge_ld_512bit(dummy_p2, ttbr0, svm_agentTree_ + sizeof(AgentTreeNode)*svm_currentTreeNode.right)
+                        );
+                        */
+
+                        distSqRight =
+                            sqr(max(0.0f, rightNode.minX - agent.position_.x)) +
+                            sqr(max(0.0f, agent.position_.x - rightNode.maxX)) +
+                            sqr(max(0.0f, rightNode.minY - agent.position_.y)) +
+                            sqr(max(0.0f, agent.position_.y - rightNode.maxY));
+                        
+                        if (distSqLeft < distSqRight) {
                             if (distSqLeft < rangeSq) {
-                                //stackTop = push(stackTop, 3, distSqLeft, distSqRight, node);
+                                //stackTop = push(stackTop, 1, distSqLeft, distSqRight, node); 
                                 nodeStored = node;
-                                retcodeStored = 3; 
+                                retcodeStored = 1;
                                 node = svm_currentTreeNode.left; 
                                 retCode = 0;
                                 break;
+
+                case 1:
+
+                                if (distSqRight < rangeSq) {
+                                    //stackTop = push(stackTop, 3, distSqLeft, distSqRight, node); 
+                                    nodeStored = node;
+                                    retcodeStored = 3;
+                                    node = svm_currentTreeNode.right; 
+                                    retCode = 0;
+                                    break;
+                                }
+                            }
+                        }
+                        else {
+                            if (distSqRight < rangeSq) {
+                                //stackTop = push(stackTop, 2, distSqLeft, distSqRight, node); 
+                                nodeStored = node;
+                                retcodeStored = 2;
+                                node = svm_currentTreeNode.right; 
+                                retCode = 0;
+                                break;
+                case 2:
+
+                                if (distSqLeft < rangeSq) {
+                                    //stackTop = push(stackTop, 3, distSqLeft, distSqRight, node);
+                                    nodeStored = node;
+                                    retcodeStored = 3; 
+                                    node = svm_currentTreeNode.left; 
+                                    retCode = 0;
+                                    break;
+                                }
                             }
                         }
                     }
-                }
-            case 3: break;
+                case 3: break;
+            }
+            if (retcodeStored != 0){
+                stackTop = push(stackTop, retcodeStored, distSqLeft, distSqRight, nodeStored);
+                continue;
+            }
+
+            if(&stack[0] == stackTop)
+            {
+                break;
+            }
+
+            stackTop--;
+
+            StackNode s = *stackTop;
+
+            retCode = s.retCode;
+            distSqLeft = s.distSqLeft;
+            distSqRight = s.distSqRight;
+            node = s.node;
         }
-        if (retcodeStored != 0){
-            stackTop = push(stackTop, retcodeStored, distSqLeft, distSqRight, nodeStored);
-            continue;
-        }
 
-        if(&stack[0] == stackTop)
-        {
-            break;
-        }
-
-        stackTop--;
-
-        StackNode s = *stackTop;
-
-        retCode = s.retCode;
-        distSqLeft = s.distSqLeft;
-        distSqRight = s.distSqRight;
-        node = s.node;
+        // copy back the modified field
+        agents[aidx].numAgentNeighbors_ = agent.numAgentNeighbors_;
+        //uint4 host_memory_bridge_st_32bit (__global int *p0, svm_pointer_t ttbr0, svm_pointer_t va, uint write_data);
+        //store 32 bits in SVM fashion
+        //host_memory_bridge_st_32bit(dummy_p1, ttbr0, svm_agents_ + sizeof(Agent)*aidx, agent.numAgentNeighbors_)
     }
-
-    // copy back the modified field
-    agents[get_global_id(0)].numAgentNeighbors_ = agent.numAgentNeighbors_;
-    //uint4 host_memory_bridge_st_32bit (__global int *p0, svm_pointer_t ttbr0, svm_pointer_t va, uint write_data);
-    //store 32 bits in SVM fashion
-    //host_memory_bridge_st_32bit(dummy_p1, ttbr0, svm_agents_ + sizeof(Agent)*get_global_id(0), agent.numAgentNeighbors_)
 }
